@@ -1,0 +1,1529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OATS — Open Agent Trust Stack</title>
+  <meta name="description" content="A System Specification for Zero-Trust AI Agent Execution. Open standard for securing autonomous AI agents through structural enforcement.">
+  <meta name="keywords" content="OATS, AI security, zero-trust, agent trust, tool contracts, ORGA loop, AI governance">
+  <meta property="og:title" content="OATS — Open Agent Trust Stack">
+  <meta property="og:description" content="A System Specification for Zero-Trust AI Agent Execution">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://openagenttruststack.org">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-deep: #0c0c0f;
+      --bg-surface: #131318;
+      --bg-elevated: #1a1a22;
+      --bg-sidebar: #101014;
+      --border: #2a2a35;
+      --border-subtle: #1e1e28;
+      --text-primary: #e8e6e1;
+      --text-secondary: #9a9790;
+      --text-tertiary: #6b6860;
+      --accent: #c8a44e;
+      --accent-dim: #a08030;
+      --accent-glow: rgba(200, 164, 78, 0.12);
+      --accent-glow-strong: rgba(200, 164, 78, 0.25);
+      --red: #c45050;
+      --green: #5a9a6a;
+      --blue: #5080b0;
+      --serif: 'DM Serif Display', Georgia, serif;
+      --body: 'Source Serif 4', Georgia, serif;
+      --mono: 'JetBrains Mono', 'Consolas', monospace;
+      --sidebar-w: 280px;
+      --content-max: 820px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html {
+      scroll-behavior: smooth;
+      scroll-padding-top: 2rem;
+    }
+
+    body {
+      font-family: var(--body);
+      font-size: 17px;
+      line-height: 1.72;
+      color: var(--text-primary);
+      background: var(--bg-deep);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* ── Noise overlay ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      pointer-events: none;
+      opacity: 0.025;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-size: 256px 256px;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: var(--sidebar-w);
+      height: 100vh;
+      background: var(--bg-sidebar);
+      border-right: 1px solid var(--border-subtle);
+      overflow-y: auto;
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+
+    .sidebar-header {
+      padding: 2rem 1.5rem 1.5rem;
+      border-bottom: 1px solid var(--border-subtle);
+      flex-shrink: 0;
+    }
+
+    .sidebar-logo {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.25rem;
+    }
+
+    .sidebar-title {
+      font-family: var(--serif);
+      font-size: 1.15rem;
+      color: var(--text-primary);
+      line-height: 1.3;
+    }
+
+    .sidebar-meta {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      color: var(--text-tertiary);
+      margin-top: 0.75rem;
+      line-height: 1.7;
+      letter-spacing: 0.02em;
+    }
+
+    .sidebar-meta span {
+      display: block;
+    }
+
+    .sidebar-nav {
+      padding: 1rem 0;
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .sidebar-nav a {
+      display: block;
+      padding: 0.35rem 1.5rem;
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      color: var(--text-tertiary);
+      text-decoration: none;
+      transition: all 0.2s ease;
+      letter-spacing: 0.01em;
+      line-height: 1.5;
+      border-left: 2px solid transparent;
+    }
+
+    .sidebar-nav a:hover {
+      color: var(--text-secondary);
+      background: var(--accent-glow);
+    }
+
+    .sidebar-nav a.active {
+      color: var(--accent);
+      border-left-color: var(--accent);
+      background: var(--accent-glow);
+    }
+
+    .sidebar-nav .nav-section {
+      padding: 0.6rem 1.5rem 0.25rem;
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      opacity: 0.6;
+    }
+
+    .sidebar-nav .nav-section:first-child {
+      padding-top: 0;
+    }
+
+    .sidebar-footer {
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--border-subtle);
+      flex-shrink: 0;
+    }
+
+    .sidebar-footer a {
+      display: inline-block;
+      font-family: var(--mono);
+      font-size: 0.62rem;
+      color: var(--text-tertiary);
+      text-decoration: none;
+      letter-spacing: 0.05em;
+      transition: color 0.2s;
+    }
+
+    .sidebar-footer a:hover {
+      color: var(--accent);
+    }
+
+    .sidebar-footer a + a {
+      margin-left: 1rem;
+    }
+
+    /* ── Main content ── */
+    .main {
+      margin-left: var(--sidebar-w);
+      min-height: 100vh;
+    }
+
+    /* ── Hero ── */
+    .hero {
+      position: relative;
+      padding: 6rem 4rem 5rem;
+      border-bottom: 1px solid var(--border);
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -60%;
+      right: -20%;
+      width: 700px;
+      height: 700px;
+      background: radial-gradient(ellipse, var(--accent-glow-strong) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero-badge {
+      display: inline-block;
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent);
+      padding: 0.35rem 0.8rem;
+      border: 1px solid var(--accent-dim);
+      border-radius: 2px;
+      margin-bottom: 2rem;
+      background: var(--accent-glow);
+    }
+
+    .hero h1 {
+      font-family: var(--serif);
+      font-size: clamp(2.4rem, 5vw, 3.6rem);
+      color: var(--text-primary);
+      line-height: 1.15;
+      margin-bottom: 0.75rem;
+      max-width: 700px;
+    }
+
+    .hero h1 em {
+      font-style: italic;
+      color: var(--accent);
+    }
+
+    .hero-subtitle {
+      font-family: var(--body);
+      font-size: 1.15rem;
+      color: var(--text-secondary);
+      max-width: 600px;
+      line-height: 1.7;
+      margin-bottom: 2.5rem;
+    }
+
+    .hero-details {
+      display: flex;
+      gap: 2.5rem;
+      flex-wrap: wrap;
+    }
+
+    .hero-detail {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      color: var(--text-tertiary);
+      letter-spacing: 0.02em;
+    }
+
+    .hero-detail strong {
+      display: block;
+      font-size: 0.6rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      margin-bottom: 0.15rem;
+      font-weight: 600;
+    }
+
+    /* ── Content area ── */
+    .content {
+      max-width: var(--content-max);
+      padding: 3rem 4rem 6rem;
+    }
+
+    /* ── Section styling ── */
+    .section {
+      margin-bottom: 4rem;
+      opacity: 0;
+      transform: translateY(12px);
+      animation: fadeUp 0.5s ease forwards;
+    }
+
+    @keyframes fadeUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .section-divider {
+      width: 40px;
+      height: 1px;
+      background: var(--accent-dim);
+      margin-bottom: 2rem;
+    }
+
+    .section-number {
+      font-family: var(--mono);
+      font-size: 0.62rem;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--accent-dim);
+      margin-bottom: 0.5rem;
+    }
+
+    h2 {
+      font-family: var(--serif);
+      font-size: 1.9rem;
+      color: var(--text-primary);
+      line-height: 1.2;
+      margin-bottom: 1.5rem;
+    }
+
+    h3 {
+      font-family: var(--serif);
+      font-size: 1.3rem;
+      color: var(--text-primary);
+      line-height: 1.3;
+      margin-top: 2.5rem;
+      margin-bottom: 1rem;
+    }
+
+    h4 {
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-top: 2rem;
+      margin-bottom: 0.75rem;
+    }
+
+    p {
+      margin-bottom: 1.15rem;
+      color: var(--text-secondary);
+    }
+
+    p strong {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    a:hover {
+      color: var(--text-primary);
+    }
+
+    /* ── Lists ── */
+    ul, ol {
+      margin-bottom: 1.15rem;
+      padding-left: 1.5rem;
+      color: var(--text-secondary);
+    }
+
+    li {
+      margin-bottom: 0.5rem;
+    }
+
+    li strong {
+      color: var(--text-primary);
+    }
+
+    /* ── Code blocks ── */
+    code {
+      font-family: var(--mono);
+      font-size: 0.85em;
+      color: var(--accent);
+      background: var(--bg-elevated);
+      padding: 0.15em 0.4em;
+      border-radius: 3px;
+    }
+
+    pre {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1.5rem;
+      overflow-x: auto;
+      position: relative;
+    }
+
+    pre code {
+      background: none;
+      padding: 0;
+      font-size: 0.8rem;
+      line-height: 1.65;
+      color: var(--text-secondary);
+    }
+
+    pre::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 3px;
+      height: 100%;
+      background: var(--accent-dim);
+      border-radius: 4px 0 0 4px;
+    }
+
+    /* ── Tables ── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 1.5rem;
+      font-size: 0.9rem;
+    }
+
+    thead th {
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent);
+      text-align: left;
+      padding: 0.75rem 1rem;
+      border-bottom: 2px solid var(--accent-dim);
+      background: var(--bg-elevated);
+    }
+
+    tbody td {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+      vertical-align: top;
+    }
+
+    tbody td strong {
+      color: var(--text-primary);
+      font-family: var(--mono);
+      font-size: 0.82rem;
+    }
+
+    tbody tr:hover {
+      background: var(--accent-glow);
+    }
+
+    /* ── Callout boxes ── */
+    .callout {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1.5rem;
+      border-radius: 0 4px 4px 0;
+    }
+
+    .callout p:last-child {
+      margin-bottom: 0;
+    }
+
+    .callout-title {
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.5rem;
+    }
+
+    /* ── Conformance tags ── */
+    .req-tag {
+      display: inline-block;
+      font-family: var(--mono);
+      font-size: 0.62rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      padding: 0.2rem 0.5rem;
+      border-radius: 2px;
+      margin-right: 0.5rem;
+      vertical-align: middle;
+    }
+
+    .req-must {
+      color: var(--red);
+      border: 1px solid var(--red);
+      background: rgba(196, 80, 80, 0.08);
+    }
+
+    .req-should {
+      color: var(--blue);
+      border: 1px solid var(--blue);
+      background: rgba(80, 128, 176, 0.08);
+    }
+
+    /* ── Trust model boxes ── */
+    .trust-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .trust-box {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1rem 1.25rem;
+    }
+
+    .trust-box h5 {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 0.75rem;
+    }
+
+    .trust-box.trusted h5 { color: var(--green); }
+    .trust-box.untrusted h5 { color: var(--red); }
+    .trust-box.partial h5 { color: var(--accent); }
+
+    .trust-box ul {
+      padding-left: 1rem;
+      margin-bottom: 0;
+    }
+
+    .trust-box li {
+      font-size: 0.82rem;
+      margin-bottom: 0.3rem;
+    }
+
+    /* ── Architecture pillars ── */
+    .pillars {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 1.25rem;
+      margin: 2rem 0;
+    }
+
+    .pillar {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-top: 2px solid var(--accent);
+      border-radius: 0 0 4px 4px;
+      padding: 1.5rem;
+    }
+
+    .pillar-number {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      color: var(--accent-dim);
+      letter-spacing: 0.1em;
+      margin-bottom: 0.5rem;
+    }
+
+    .pillar h4 {
+      font-family: var(--serif);
+      font-size: 1rem;
+      text-transform: none;
+      letter-spacing: 0;
+      color: var(--text-primary);
+      margin-top: 0;
+      margin-bottom: 0.5rem;
+    }
+
+    .pillar p {
+      font-size: 0.88rem;
+      margin-bottom: 0;
+    }
+
+    /* ── References ── */
+    .ref-list {
+      list-style: none;
+      padding-left: 0;
+    }
+
+    .ref-list li {
+      padding-left: 0;
+      font-size: 0.88rem;
+      margin-bottom: 0.65rem;
+      padding-left: 1.5rem;
+      text-indent: -1.5rem;
+      color: var(--text-tertiary);
+    }
+
+    /* ── Footer ── */
+    .footer {
+      border-top: 1px solid var(--border);
+      padding: 3rem 4rem;
+      max-width: var(--content-max);
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 2rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.5rem;
+    }
+
+    .footer-links a {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--text-tertiary);
+      letter-spacing: 0.03em;
+    }
+
+    .footer-links a:hover {
+      color: var(--accent);
+    }
+
+    .footer-copy {
+      font-family: var(--mono);
+      font-size: 0.62rem;
+      color: var(--text-tertiary);
+      letter-spacing: 0.03em;
+      opacity: 0.6;
+    }
+
+    /* ── Mobile hamburger ── */
+    .menu-toggle {
+      display: none;
+      position: fixed;
+      top: 1rem;
+      left: 1rem;
+      z-index: 200;
+      width: 40px;
+      height: 40px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .menu-toggle span,
+    .menu-toggle span::before,
+    .menu-toggle span::after {
+      display: block;
+      width: 18px;
+      height: 1.5px;
+      background: var(--text-secondary);
+      transition: all 0.3s;
+    }
+
+    .menu-toggle span { position: relative; }
+    .menu-toggle span::before,
+    .menu-toggle span::after {
+      content: '';
+      position: absolute;
+      left: 0;
+    }
+    .menu-toggle span::before { top: -5px; }
+    .menu-toggle span::after { top: 5px; }
+
+    .menu-toggle.open span { background: transparent; }
+    .menu-toggle.open span::before { transform: rotate(45deg); top: 0; }
+    .menu-toggle.open span::after { transform: rotate(-45deg); top: 0; }
+
+    /* ── Responsive ── */
+    @media (max-width: 1024px) {
+      .content, .footer { padding-left: 2.5rem; padding-right: 2.5rem; }
+      .hero { padding-left: 2.5rem; padding-right: 2.5rem; }
+    }
+
+    @media (max-width: 768px) {
+      .sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+      }
+      .sidebar.open {
+        transform: translateX(0);
+      }
+      .menu-toggle {
+        display: flex;
+      }
+      .main {
+        margin-left: 0;
+      }
+      .hero { padding: 5rem 1.5rem 3rem; }
+      .hero h1 { font-size: 2rem; }
+      .content, .footer { padding-left: 1.5rem; padding-right: 1.5rem; }
+      .pillars, .trust-grid { grid-template-columns: 1fr; }
+      .hero-details { gap: 1.5rem; }
+    }
+
+    /* ── Staggered animations ── */
+    .section:nth-child(1) { animation-delay: 0.05s; }
+    .section:nth-child(2) { animation-delay: 0.1s; }
+    .section:nth-child(3) { animation-delay: 0.15s; }
+  </style>
+</head>
+<body>
+
+<!-- Mobile menu button -->
+<button class="menu-toggle" aria-label="Toggle navigation" onclick="toggleSidebar()">
+  <span></span>
+</button>
+
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">Specification</div>
+    <div class="sidebar-title">Open Agent Trust Stack</div>
+    <div class="sidebar-meta">
+      <span>v1.0.0 &middot; Release</span>
+      <span>Apache 2.0 License</span>
+      <span>ThirdKey AI</span>
+    </div>
+  </div>
+  <nav class="sidebar-nav" id="nav">
+    <div class="nav-section">Overview</div>
+    <a href="#abstract">Abstract</a>
+    <a href="#introduction">1. Introduction</a>
+    <a href="#related-work">2. Related Work</a>
+    <a href="#problem">3. Problem Formalization</a>
+    <a href="#threat-model">4. Threat Model</a>
+    <div class="nav-section">Architecture</div>
+    <a href="#orga-loop">5. ORGA Loop</a>
+    <a href="#tool-contracts">6. Tool Contracts</a>
+    <a href="#identity">7. Identity Layer</a>
+    <a href="#policy">8. Policy Enforcement</a>
+    <a href="#audit">9. Audit Layer</a>
+    <div class="nav-section">Deployment</div>
+    <a href="#sandboxing">10. Sandboxing</a>
+    <a href="#inter-agent">11. Inter-Agent</a>
+    <a href="#conformance">12. Conformance</a>
+    <a href="#implementations">13. Implementations</a>
+    <div class="nav-section">Future</div>
+    <a href="#research">14. Research</a>
+    <a href="#conclusion">15. Conclusion</a>
+    <a href="#references">References</a>
+  </nav>
+  <div class="sidebar-footer">
+    <a href="https://thirdkey.ai">ThirdKey AI</a>
+    <a href="https://github.com/ThirdKeyAI/OpenAgentTrustStack">GitHub</a>
+  </div>
+</aside>
+
+<!-- Main content -->
+<div class="main">
+
+  <!-- Hero -->
+  <header class="hero">
+    <div class="hero-badge">System Specification</div>
+    <h1>Open Agent <em>Trust Stack</em></h1>
+    <p class="hero-subtitle">A system specification for zero-trust AI agent execution. Define what is permitted and make everything else structurally inexpressible.</p>
+    <div class="hero-details">
+      <div class="hero-detail">
+        <strong>Version</strong>
+        1.0.0
+      </div>
+      <div class="hero-detail">
+        <strong>Status</strong>
+        Release
+      </div>
+      <div class="hero-detail">
+        <strong>Authors</strong>
+        Jascha Wanger / ThirdKey AI
+      </div>
+      <div class="hero-detail">
+        <strong>Date</strong>
+        2026-04-08
+      </div>
+      <div class="hero-detail">
+        <strong>License</strong>
+        Apache 2.0
+      </div>
+      <div class="hero-detail">
+        <strong>PDF</strong>
+        <a href="OATS-v1.0.0.pdf" style="color: var(--accent);">OATS-v1.0.0.pdf</a>
+      </div>
+    </div>
+  </header>
+
+  <div class="content">
+
+    <!-- Abstract -->
+    <section class="section" id="abstract">
+      <div class="section-divider"></div>
+      <div class="section-number">Abstract</div>
+      <h2>Zero-Trust Agent Execution Through Structural Enforcement</h2>
+      <p>As AI systems evolve from assistants into autonomous agents executing consequential actions, the security boundary shifts from model outputs to tool execution. Traditional security paradigms &mdash; log aggregation, perimeter defense, post-hoc forensics, and even runtime interception of fully-formed actions &mdash; cannot adequately protect systems where AI-driven actions are irreversible, execute at machine speed, and originate from potentially compromised orchestration layers.</p>
+      <p>The fundamental problem is architectural: when the policy gate can be influenced by the LLM it governs, when enforcement correctness is verified only at runtime, and when identity is self-asserted rather than cryptographically verified, security guarantees degrade under adversarial pressure.</p>
+
+      <div class="pillars">
+        <div class="pillar">
+          <div class="pillar-number">Conviction 01</div>
+          <h4>Allow-List Enforcement</h4>
+          <p>Constrain what actions can be expressed through declarative tool contracts, making dangerous actions structurally inexpressible.</p>
+        </div>
+        <div class="pillar">
+          <div class="pillar-number">Conviction 02</div>
+          <h4>Compile-Time Enforcement</h4>
+          <p>The ORGA reasoning loop uses typestate programming so that skipping the policy gate is a type error, not a runtime bug.</p>
+        </div>
+        <div class="pillar">
+          <div class="pillar-number">Conviction 03</div>
+          <h4>Structural Independence</h4>
+          <p>The Gate phase operates outside LLM influence by construction, not by trust assumption.</p>
+        </div>
+      </div>
+
+      <p>OATS specifies five layers: <strong>(1)</strong> the ORGA reasoning loop with compile-time phase enforcement, <strong>(2)</strong> declarative tool contracts with typed parameter validation, <strong>(3)</strong> a cryptographic identity stack providing bidirectional trust between agents and tools, <strong>(4)</strong> a formally verifiable policy engine operating on structured inputs, and <strong>(5)</strong> hash-chained cryptographic audit journals with Ed25519 signatures for tamper-evident forensic reconstruction.</p>
+      <p>OATS is model-agnostic, framework-agnostic, and vendor-neutral. It defines what a compliant agent runtime must enforce, not how it must be implemented. The architecture specified here has been validated through approximately eight months of autonomous operation in a production runtime, moving beyond theoretical frameworks to specify requirements derived from operational experience.</p>
+    </section>
+
+    <!-- 1. Introduction -->
+    <section class="section" id="introduction">
+      <div class="section-divider"></div>
+      <div class="section-number">Section 01</div>
+      <h2>Introduction</h2>
+
+      <h3>1.1 The Problem</h3>
+      <p>AI agents now execute consequential actions across enterprise systems: querying databases, sending communications, modifying files, invoking cloud services, and managing credentials. These actions are irreversible, execute at machine speed, originate from potentially compromised orchestration layers, and compose into violation patterns invisible when evaluated in isolation.</p>
+      <p>The security community has correctly identified the action layer as the stable enforcement boundary. Regardless of how agent frameworks, model architectures, or orchestration patterns evolve, actions on tools and APIs remain the point where AI decisions materialize as real-world effects. Security must be enforced at this boundary.</p>
+      <p>However, identifying the right boundary is necessary but not sufficient. The critical question is <em>how</em> enforcement occurs at that boundary, and current approaches have structural weaknesses that undermine their guarantees.</p>
+
+      <h3>1.2 The Allow-List Thesis</h3>
+      <p>Existing runtime security approaches operate on a deny-list model: the agent formulates an action, the security system intercepts it, evaluates it against policy and context, and decides whether to allow or block it. This model has a fundamental problem: it requires enumerating dangerous behavior. Every deny-list is incomplete by definition. Novel attacks, unanticipated compositions, and edge cases slip through because the system only blocks what it has been told to block.</p>
+      <p>OATS inverts this model. Instead of intercepting arbitrary actions and deciding which to block, an OATS-compliant runtime constrains what actions can be expressed in the first place. The agent fills typed parameters defined by a declarative tool contract. The runtime validates those parameters against the contract, constructs the invocation from a template, and executes it. The agent never generates raw commands, never constructs API calls directly, never formulates unconstrained actions. Dangerous actions cannot be expressed because the interface does not permit them.</p>
+
+      <div class="callout">
+        <div class="callout-title">Core Thesis</div>
+        <p>Define what is permitted and make everything else structurally inexpressible, rather than trying to enumerate and block what is dangerous.</p>
+      </div>
+
+      <h3>1.3 Structural Enforcement</h3>
+      <p>A second structural weakness in existing approaches is that enforcement correctness is verified only at runtime. The policy gate is a software component that can be misconfigured, bypassed through bugs, or circumvented through unanticipated code paths. If the gate fails to execute, actions proceed unguarded.</p>
+      <p>OATS addresses this through compile-time enforcement of the reasoning loop. The Observe-Reason-Gate-Act (ORGA) cycle uses type-level programming (typestates) so that skipping the Gate phase, dispatching tools without reasoning first, or observing results without dispatching are compile-time errors, not runtime bugs. The type system guarantees that every action passes through policy evaluation.</p>
+
+      <h3>1.4 Gate Independence</h3>
+      <p>The third structural weakness is that existing approaches evaluate actions within systems that process untrusted LLM outputs. The policy engine shares context, memory, and execution environment with the orchestration layer it is supposed to govern. An LLM that has been compromised through prompt injection can potentially influence the evaluation of its own actions.</p>
+      <p>In OATS, the Gate phase operates outside LLM influence. The Gate receives a structured action proposal and evaluates it against policy using a formally verifiable policy engine. The LLM cannot modify, bypass, or influence the Gate's evaluation. Policy denial is fed back to the LLM as an observation, allowing it to adjust its approach, but the denial itself is not negotiable.</p>
+
+      <h3>1.5 Contributions</h3>
+      <ol>
+        <li><strong>Typestate-enforced reasoning loop.</strong> The ORGA (Observe-Reason-Gate-Act) cycle with compile-time phase enforcement, ensuring that policy evaluation cannot be skipped, circumvented, or reordered.</li>
+        <li><strong>Allow-list tool contracts.</strong> A declarative tool contract format that constrains agent-tool interaction to typed, validated parameters, making dangerous actions structurally inexpressible.</li>
+        <li><strong>Layered cryptographic identity.</strong> A bidirectional identity stack: tool integrity verification and agent identity verification, providing mutual authentication between agents and tools.</li>
+        <li><strong>Hash-chained audit journals.</strong> Cryptographically signed, hash-chained event journals that provide tamper-evident forensic reconstruction with offline verification.</li>
+        <li><strong>Conformance requirements.</strong> Minimum requirements for OATS-compliant systems, enabling objective evaluation of implementations and preventing category dilution.</li>
+      </ol>
+    </section>
+
+    <!-- 2. Related Work -->
+    <section class="section" id="related-work">
+      <div class="section-divider"></div>
+      <div class="section-number">Section 02</div>
+      <h2>Related Work</h2>
+
+      <h3>2.1 Agent Security Research</h3>
+      <p>The security risks of LLM-based agents have been catalogued by several surveys. Ruan et al. provide comprehensive threat taxonomies covering prompt injection, tool misuse, and data exfiltration in agentic systems. Wu et al. focus on security properties of AI agents, while Su et al. address autonomy-induced risks including memory poisoning and deferred decision hazards. Debenedetti et al. introduce AgentDojo for evaluating attacks and defenses against LLM agents, and Ye et al. propose ToolEmu for identifying risky agent failures. These works characterize the problem space and evaluate agent robustness but operate at the model or benchmark level, not at the runtime action boundary where OATS enforces policy.</p>
+      <p>Gaire et al. systematize security and safety risks in the Model Context Protocol ecosystem, providing a taxonomy of threats to MCP primitives. Their analysis of tool poisoning and indirect prompt injection directly informs OATS's threat model for tool supply chain attacks.</p>
+
+      <h3>2.2 Runtime Security Specifications</h3>
+      <p>Errico (2026) introduces Autonomous Action Runtime Management (AARM), a system specification for securing AI-driven actions at runtime. AARM formalizes the runtime security gap, proposes an action classification framework, and specifies conformance requirements. OATS shares AARM's identification of the action layer as the stable security boundary. OATS extends this foundation with compile-time enforcement of the reasoning loop, allow-list tool contracts, concrete cryptographic identity protocols, and multi-tier execution isolation.</p>
+
+      <h3>2.3 Industry Frameworks</h3>
+      <p>Google's Cloud CISO perspective advocates defense-in-depth and runtime controls for agents. AWS's Agentic AI Security Scoping Matrix provides a risk assessment framework. Microsoft's governance framework addresses organizational controls including identity management and approval workflows. Raza et al. present a TRiSM framework for agentic multi-agent systems. These frameworks provide lifecycle governance perspectives; OATS focuses specifically on the runtime enforcement layer.</p>
+
+      <h3>2.4 Policy Languages and Access Control</h3>
+      <p>OATS's policy enforcement layer builds on established access control research. RBAC and ABAC evaluate permissions against static attributes but lack session-level context accumulation. Capability-based security constrains authority propagation but does not address the compositional risks of non-deterministic agents. Policy languages such as OPA and Cedar provide expressive evaluation engines suitable as backends for OATS's policy evaluation component. AWS's independent choice of Cedar for their AgentCore runtime validates the architectural thesis that formal policy languages belong at the agent execution boundary.</p>
+
+      <h3>2.5 Complementary Standards</h3>
+      <p><strong>OWASP Top 10 for LLM Applications.</strong> OWASP catalogs vulnerabilities. OATS provides runtime enforcement that mitigates several categories, particularly tool misuse, excessive agency, and insecure output handling.</p>
+      <p><strong>NIST AI RMF.</strong> NIST provides a risk management framework. OATS provides technical enforcement mechanisms that implement portions of the NIST framework, particularly around governance, monitoring, and accountability.</p>
+      <p><strong>Model Context Protocol (MCP).</strong> MCP defines a protocol for agent-tool communication. OATS defines how to govern actions flowing through that protocol. The two are complementary: MCP defines the transport, OATS defines the trust.</p>
+    </section>
+
+    <!-- 3. Problem Formalization -->
+    <section class="section" id="problem">
+      <div class="section-divider"></div>
+      <div class="section-number">Section 03</div>
+      <h2>Problem Formalization</h2>
+      <p>This section formalizes the system model, action definitions, and security objectives that the remainder of the specification builds upon.</p>
+
+      <h3>3.1 System Model</h3>
+      <p>Let an AI-enabled application <em>A</em> consist of:</p>
+      <ul>
+        <li>An <strong>orchestration layer</strong> <em>O</em> (agent framework, workflow engine, or application code) that interprets user requests and invokes tools. <em>O</em> includes the LLM, prompt templates, memory systems, and control flow logic. Crucially, <em>O</em> processes untrusted inputs and cannot be assumed to behave as intended.</li>
+        <li>A set of <strong>tools</strong> <em>T = {t<sub>1</sub>, t<sub>2</sub>, ..., t<sub>n</sub>}</em>, where each tool <em>t<sub>i</sub></em> exposes operations producing effects on external systems.</li>
+        <li>An <strong>identity context</strong> <em>I</em> comprising four layers: human principal, service identity, agent/session identity, and role/privilege scope.</li>
+        <li>An <strong>environment</strong> <em>E</em> including data stores, APIs, cloud services, and enterprise systems.</li>
+        <li>A <strong>session context</strong> <em>C</em> that accumulates state over the course of an interaction.</li>
+      </ul>
+
+      <h3>3.2 Action Definition</h3>
+      <p>An action <em>a</em> is a discrete operation the agent requests against a tool:</p>
+      <pre><code>a = (t, op, p, id, ctx, ts)</code></pre>
+      <p>where <em>t ∈ T</em> is the target tool, <em>op</em> is the specific operation, <em>p</em> is the parameter set, <em>id ∈ I</em> is the identity context, <em>ctx ∈ C</em> is the accumulated session context, and <em>ts</em> is the timestamp.</p>
+
+      <h3>3.3 Tool Contract Definition</h3>
+      <p>A tool contract <em>κ</em> defines the complete behavioral interface for a tool:</p>
+      <pre><code>κ = (name, Π, τ, σ_out, μ, ρ)</code></pre>
+      <p>where <em>Π = {π<sub>1</sub>, ..., π<sub>m</sub>}</em> is the set of typed parameter definitions, <em>τ</em> is the invocation template, <em>σ<sub>out</sub></em> is the output schema, <em>μ</em> is the policy metadata (resource, action), and <em>ρ</em> is the risk tier.</p>
+      <p>Each parameter definition specifies the parameter name, its type from the type system, validation constraints, and whether it is required. The type system provides at minimum: <code>string, integer, boolean, enum, scope_target, url, path, ip_address, cidr, port</code>. Each type has an associated validation function and a sanitization function that strips dangerous characters.</p>
+
+      <h3>3.4 Constrained Action Formulation</h3>
+      <p>Under OATS, the agent does not formulate arbitrary actions. Instead, the agent proposes a <em>parameterized invocation</em> <code>a' = (t, op, p')</code> where <code>p'</code> maps parameter names to values. The runtime validates each value against its declared type. If validation succeeds, the runtime constructs the executable action from the template: <code>a_exec = τ(p')</code>.</p>
+      <p>The agent never sees or constructs <em>a<sub>exec</sub></em>. This is the allow-list property: the space of expressible actions is constrained to those producible from valid parameter sets applied to contract templates.</p>
+
+      <h3>3.5 Context Accumulation</h3>
+      <p>Session context accumulates across actions:</p>
+      <pre><code>C_n = C_{n-1} ∪ {a_n, o_n, δ_n}</code></pre>
+      <p>where <em>C<sub>n</sub></em> is the context after action <em>n</em>, <em>a<sub>n</sub></em> is the action, <em>o<sub>n</sub></em> is its output, and <em>δ<sub>n</sub></em> represents derived signals including data classification, semantic distance from the original request, scope expansion indicators, entity references, and confidence level.</p>
+
+      <h3>3.6 Policy Structure</h3>
+      <p>A policy <em>π ∈ Π</em> maps an action-context-identity triple to an authorization decision:</p>
+      <pre><code>π : (a, C, I) → {ALLOW, DENY, MODIFY, STEP_UP, DEFER}</code></pre>
+      <p>Each policy consists of a match predicate, a decision, a priority, and an optional modification function applied when the decision is <code>MODIFY</code>.</p>
+
+      <h3>3.7 Security Objectives</h3>
+      <p>An OATS-compliant runtime MUST ensure that for all actions <em>a</em>:</p>
+      <ol>
+        <li><strong>Structural constraint.</strong> <em>a</em> is expressible only through a valid tool contract <em>κ</em>.</li>
+        <li><strong>Pre-execution interception.</strong> <em>a</em> is intercepted and evaluated before any effects occur.</li>
+        <li><strong>Compile-time gate guarantee.</strong> All code paths from action proposal to tool dispatch pass through the Gate phase; this is verified at compile time.</li>
+        <li><strong>Policy compliance.</strong> <em>a</em> satisfies organizational policy given context <em>C</em> and identity <em>I</em>.</li>
+        <li><strong>Context-aware evaluation.</strong> <em>a</em> is evaluated against both static policy and accumulated session context.</li>
+        <li><strong>Identity verification.</strong> Both the agent invoking a tool and the tool being invoked are cryptographically verified.</li>
+        <li><strong>Forensic completeness.</strong> Every action, its context, the policy decision, and the execution outcome are recorded in a tamper-evident journal.</li>
+      </ol>
+    </section>
+
+    <!-- 4. Threat Model -->
+    <section class="section" id="threat-model">
+      <div class="section-divider"></div>
+      <div class="section-number">Section 04</div>
+      <h2>Threat Model</h2>
+
+      <div class="callout">
+        <div class="callout-title">Fundamental Assumption</div>
+        <p>The AI orchestration layer cannot be trusted as a security boundary. The model processes untrusted inputs through opaque reasoning, producing actions that may serve attacker goals rather than user intent.</p>
+      </div>
+
+      <h3>4.1 Threats Addressed</h3>
+
+      <h4>Prompt Injection (Direct and Indirect)</h4>
+      <p>Adversaries embed instructions in user input, documents, tool outputs, or multimedia that override the agent's intended behavior. OATS mitigates this at two layers. At the tool contract layer, injected instructions cannot produce arbitrary tool invocations because the contract does not expose parameters that accept raw commands. At the policy layer, actions are evaluated against accumulated session context regardless of how the agent was instructed.</p>
+
+      <h4>Confused Deputy</h4>
+      <p>A privileged agent is tricked into misusing its authority through ambiguous or deceptive instructions. OATS mitigates this through bidirectional identity verification: before an agent invokes a tool, the tool's integrity is verified cryptographically; before a tool accepts an invocation, the agent's identity is verified cryptographically.</p>
+
+      <h4>Action Composition / Data Exfiltration</h4>
+      <p>Individual actions may each satisfy policy while their composition constitutes a breach. OATS tracks data classification across actions within a session through context accumulation. When sensitive data is accessed, subsequent external communications are evaluated against this context.</p>
+
+      <h4>Intent Drift</h4>
+      <p>The agent's actions gradually diverge from the user's original request through its own reasoning process. OATS tracks the chain of intent from original request through each action via context accumulation and semantic distance measurement. When cumulative drift exceeds configured thresholds, the Gate triggers deferral, step-up authorization, or denial.</p>
+
+      <h4>Malicious Tool Outputs</h4>
+      <p>Compromised or adversarial tools return outputs designed to manipulate subsequent agent behavior. OATS tracks tool outputs as part of session state and restricts what actions are permissible after specific tool calls.</p>
+
+      <h4>Over-Privileged Credentials</h4>
+      <p>Agents provisioned with credentials exceeding operational requirements. OATS supports least-privilege enforcement through just-in-time credential issuance and operation-specific token scoping.</p>
+
+      <h4>Goal Hijacking and Memory Poisoning</h4>
+      <p>Adversaries alter the agent's objectives or corrupt persistent memory. OATS operates at the action level: regardless of what objective the agent believes it is pursuing, each action must satisfy policy and align with accumulated context.</p>
+
+      <h3>4.2 Attack Lifecycle</h3>
+      <p>Attacks against AI agents typically follow a four-stage lifecycle: (1) <strong>injection</strong> &mdash; attacker embeds malicious instructions in content the agent processes; (2) <strong>hijacking</strong> &mdash; the agent interprets malicious content as legitimate instructions; (3) <strong>execution</strong> &mdash; the agent invokes tools with attacker-controlled parameters; (4) <strong>impact</strong> &mdash; actions produce irreversible effects. OATS intervenes at two points: between stages 2 and 3 (the Gate blocks actions that violate policy), and before stage 3 begins (tool contracts constrain what parameters the agent can express).</p>
+      <p>Intent drift follows a different lifecycle without explicit injection. The agent's reasoning gradually diverges through plausible-seeming steps. OATS detects this through context accumulation and semantic distance tracking regardless of cause.</p>
+
+      <h3>4.3 Tool Supply Chain Attacks</h3>
+      <p>When agents use tools provided by third parties (MCP servers, API integrations, plugin ecosystems), those tools may be tampered with, impersonated, or silently modified. OATS mitigates tool supply chain attacks through cryptographic tool integrity verification. Tool contracts are signed by their publishers. The runtime verifies signatures before registering tools, rejecting any contract that fails verification.</p>
+
+      <h3>4.4 Trust Assumptions</h3>
+      <div class="trust-grid">
+        <div class="trust-box trusted">
+          <h5>Trusted</h5>
+          <ul>
+            <li>The OATS runtime (ORGA loop, policy engine, tool contract executor, journal, identity verifier)</li>
+            <li>Cryptographic primitives and key management infrastructure</li>
+            <li>The policy store and policy authoring process</li>
+            <li>The underlying infrastructure (OS, network, hardware)</li>
+            <li>The compiler and type system</li>
+          </ul>
+        </div>
+        <div class="trust-box untrusted">
+          <h5>Untrusted</h5>
+          <ul>
+            <li>The AI model and its outputs</li>
+            <li>The orchestration layer</li>
+            <li>User inputs and prompts</li>
+            <li>Tool outputs and retrieved data</li>
+            <li>External documents, emails, web content</li>
+            <li>Agent memory and conversation history</li>
+            <li>Tool contracts from unverified publishers</li>
+          </ul>
+        </div>
+        <div class="trust-box partial">
+          <h5>Partially Trusted</h5>
+          <ul>
+            <li>Tool implementations (OATS constrains invocation but cannot prevent bugs within tools)</li>
+            <li>Human approvers (OATS routes step-up authorization but cannot prevent social engineering)</li>
+            <li>Verified tool contracts (verified as untampered, but the tool itself may have vulnerabilities)</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>4.5 Out of Scope</h3>
+      <p>OATS addresses runtime action security. The following threats require complementary controls: model training data poisoning or weight manipulation (pre-deployment ML security); denial of service against the OATS runtime (infrastructure availability); physical or infrastructure-level attacks (physical security); social engineering of human approvers (security awareness training); code-level vulnerabilities within tool implementations (application security testing); memory storage security (separate storage controls). OATS is one layer in a defense-in-depth strategy.</p>
+    </section>
+
+    <!-- 5. ORGA Loop -->
+    <section class="section" id="orga-loop">
+      <div class="section-divider"></div>
+      <div class="section-number">Section 05</div>
+      <h2>Core Architecture: The ORGA Loop</h2>
+      <p>The ORGA (Observe-Reason-Gate-Act) loop is the core execution engine for OATS-compliant agent runtimes. It drives a multi-turn cycle between an LLM, a policy gate, and external tools through four mandatory phases.</p>
+
+      <h3>5.1 Phase Definitions</h3>
+      <h4>Observe</h4>
+      <p>Collect results from previous tool executions. Incorporate tool outputs, error messages, policy denial feedback, and environmental signals into the agent's context. This phase also integrates knowledge retrieval (RAG-enhanced context) when available.</p>
+
+      <h4>Reason</h4>
+      <p>The LLM processes accumulated context and produces proposed actions (tool calls or text responses). The LLM sees tool definitions but never sees raw invocation details. The LLM's output is a structured proposal, not an executable action.</p>
+
+      <h4>Gate</h4>
+      <p>The policy engine evaluates each proposed action. This phase operates entirely outside LLM influence. The Gate receives the proposed action, the accumulated session context, and the agent's identity, and evaluates them against organizational policy. The Gate produces one of five decisions: <strong>Allow</strong>, <strong>Deny</strong>, <strong>Modify</strong>, <strong>Step-Up</strong> (pause for human approval), or <strong>Defer</strong> (temporarily suspend pending additional context).</p>
+
+      <h4>Act</h4>
+      <p>Approved actions are dispatched to tool executors. The tool contract executor validates parameters against the contract's type system, constructs the invocation from the contract's template, executes with timeout enforcement, captures output in a structured evidence envelope, and records the execution in the audit journal.</p>
+
+      <h3>5.2 Typestate Enforcement</h3>
+      <p>Phase transitions <span class="req-tag req-must">MUST</span> be enforced at compile time using type-level programming (typestates). Each phase is a distinct type. The transition from Reason to Act without passing through Gate <span class="req-tag req-must">MUST</span> be a type error, not a runtime check.</p>
+
+      <pre><code>AgentLoop&lt;Reasoning&gt;    -- produce_output() --&gt;  AgentLoop&lt;PolicyCheck&gt;
+AgentLoop&lt;PolicyCheck&gt;  -- check_policy()  --&gt;  AgentLoop&lt;ToolDispatching&gt;
+AgentLoop&lt;ToolDispatching&gt; -- dispatch()   --&gt;  AgentLoop&lt;Observing&gt;
+AgentLoop&lt;Observing&gt;    -- observe()       --&gt;  AgentLoop&lt;Reasoning&gt; | LoopResult</code></pre>
+
+      <p>The following are compile-time errors:</p>
+      <ul>
+        <li>Skipping the policy check (Reasoning to ToolDispatching)</li>
+        <li>Dispatching tools without reasoning (PolicyCheck to Observing)</li>
+        <li>Observing results without dispatching (Reasoning to Observing)</li>
+      </ul>
+
+      <p>Implementations in languages without native typestate support <span class="req-tag req-must">MUST</span> provide equivalent guarantees through runtime enforcement with 100% path coverage testing and formal verification that all tool dispatch paths pass through the Gate.</p>
+
+      <h3>5.3 Dynamic Branching</h3>
+      <p>The only point where the ORGA loop branches dynamically is after the Observe phase: the loop either continues (returning to Reason for another iteration) or completes (producing a final result). This branching is a standard pattern match on a concrete type, not dynamic dispatch. All other phase transitions are strictly linear.</p>
+
+      <h3>5.4 Loop Termination</h3>
+      <p>The loop terminates when:</p>
+      <ul>
+        <li>The LLM produces a final text response (no tool calls proposed)</li>
+        <li>Iteration limits are reached (configurable per deployment)</li>
+        <li>Token budget is exhausted</li>
+        <li>Time budget is exhausted</li>
+        <li>A circuit breaker trips (configurable failure thresholds on tool calls)</li>
+      </ul>
+
+      <h3>5.5 Policy Denial Feedback</h3>
+      <p>When the Gate denies an action, the denial reason <span class="req-tag req-must">MUST</span> be fed back to the LLM as an observation in the next Observe phase. The LLM may propose alternative actions that satisfy policy, but the Gate evaluates each proposal independently. The denial is not negotiable; only the LLM's subsequent proposals can change.</p>
+    </section>
+
+    <!-- 5. Tool Contracts -->
+    <section class="section" id="tool-contracts">
+      <div class="section-divider"></div>
+      <div class="section-number">Section 06</div>
+      <h2>Tool Contract Layer</h2>
+
+      <h3>6.1 The Allow-List Principle</h3>
+      <p>An OATS-compliant runtime <span class="req-tag req-must">MUST</span> support declarative tool contracts that define the complete behavioral contract for each tool. The security model inverts the sandbox approach:</p>
+      <ul>
+        <li><strong>Sandbox (deny-list):</strong> LLM generates an arbitrary action. The security system intercepts, evaluates, and decides whether to allow or block.</li>
+        <li><strong>Tool contract (allow-list):</strong> LLM fills typed parameters constrained by the contract. The executor validates, constructs from template, and executes. The LLM never generates or sees the raw invocation.</li>
+      </ul>
+
+      <h3>6.2 Contract Requirements</h3>
+      <p>A tool contract <span class="req-tag req-must">MUST</span> define:</p>
+      <ol>
+        <li><strong>Typed parameters.</strong> Each parameter has a declared type with validation constraints. The type system <span class="req-tag req-must">MUST</span> include at minimum: string (with injection sanitization, optional regex pattern), integer (with optional min/max), boolean, enum (value from declared allow-list), and a target type for scope-checked values. All string-based types <span class="req-tag req-must">MUST</span> reject shell metacharacters (<code>;&amp;|$\`(){}[]&lt;&gt;!</code>) by default.</li>
+        <li><strong>Invocation mechanism.</strong> The contract declares how the tool is invoked: command template, HTTP request template, protocol server address, or interactive session definition.</li>
+        <li><strong>Output schema.</strong> The contract declares the expected structure of tool output. The executor validates parsed output against this schema before returning results to the agent.</li>
+        <li><strong>Policy metadata.</strong> The contract declares the policy resource and action for the tool, enabling the policy engine to evaluate authorization without parsing tool-specific details.</li>
+        <li><strong>Risk tier.</strong> The contract declares a risk classification (e.g., low, medium, high, critical) that informs default policy generation and step-up authorization thresholds.</li>
+      </ol>
+
+      <h3>6.3 Execution Modes</h3>
+      <p>An OATS-compliant tool contract format <span class="req-tag req-should">SHOULD</span> support multiple execution modes:</p>
+      <ul>
+        <li><strong>Oneshot:</strong> Execute a single invocation and return results.</li>
+        <li><strong>Session:</strong> Maintain a running process where each interaction is independently validated and policy-gated.</li>
+        <li><strong>Browser:</strong> Maintain a governed browser session where navigation, form submission, and script execution are typed, scoped, and policy-gated.</li>
+      </ul>
+
+      <h3>6.4 Contract Integrity</h3>
+      <p>Tool contracts <span class="req-tag req-must">MUST</span> support cryptographic integrity verification. The signature <span class="req-tag req-must">MUST</span> cover the entire contract (parameters, validation rules, invocation templates, output schemas, scope constraints). Partial signatures are insufficient because the invocation template and scope constraints are security-critical.</p>
+
+      <h3>6.5 MCP Schema Generation</h3>
+      <p>Tool contracts <span class="req-tag req-should">SHOULD</span> support automatic generation of protocol-compatible schemas (e.g., MCP <code>inputSchema</code> and <code>outputSchema</code>) from the contract definition.</p>
+    </section>
+
+    <!-- 6. Identity Layer -->
+    <section class="section" id="identity">
+      <div class="section-divider"></div>
+      <div class="section-number">Section 07</div>
+      <h2>Identity Layer</h2>
+
+      <h3>7.1 The Identity Problem</h3>
+      <p>When AI agents interact with tools, services, and other agents, identity is typically self-asserted. An agent claims to be "Scout v2 from Tarnover LLC" with no way for the receiving party to verify that claim. Self-asserted identity provides no security guarantee: agents can be impersonated, tools can be spoofed, and delegation claims cannot be verified.</p>
+      <p>OATS specifies a two-layer cryptographic identity stack that addresses both directions of the trust problem.</p>
+
+      <h3>7.2 Tool Integrity Verification</h3>
+      <p>An OATS-compliant runtime <span class="req-tag req-must">MUST</span> support cryptographic verification of tool schemas and contracts:</p>
+      <ul>
+        <li><strong>Domain-anchored discovery.</strong> Tool publishers host public keys at well-known endpoints (e.g., <code>/.well-known/</code> URIs per RFC 8615). No centralized registry required.</li>
+        <li><strong>Signature verification.</strong> Tool contracts and schemas are signed with ECDSA P-256 (or equivalent). The runtime verifies signatures before registering tools.</li>
+        <li><strong>Trust-On-First-Use (TOFU) key pinning.</strong> On first encounter, the runtime pins the publisher's key. Subsequent key changes require explicit trust decisions.</li>
+        <li><strong>Revocation support.</strong> Publishers can revoke keys and schemas. The runtime checks revocation status before accepting tools.</li>
+      </ul>
+
+      <h3>7.3 Agent Identity Verification</h3>
+      <p>An OATS-compliant runtime <span class="req-tag req-should">SHOULD</span> support cryptographic agent identity verification:</p>
+      <ul>
+        <li><strong>Domain-anchored agent identity.</strong> Organizations publish verifiable identity documents for their agents at well-known endpoints.</li>
+        <li><strong>Short-lived credentials.</strong> Agents are issued time-limited signed credentials (e.g., ES256 JWTs) declaring their identity, capabilities, and delegation chain.</li>
+        <li><strong>Delegation chains.</strong> Agent credentials support maker-deployer delegation, where the organization that builds agent software and the organization that deploys it are independently verifiable.</li>
+        <li><strong>Capability scoping.</strong> Agent credentials declare specific capabilities (e.g., <code>read:data</code>, <code>write:reports</code>), enabling verifiers to enforce least-privilege access.</li>
+      </ul>
+
+      <h3>7.4 Bidirectional Trust</h3>
+      <p>The two identity layers create a bidirectional trust model:</p>
+      <ol>
+        <li><strong>Agent verifies tool.</strong> Before invoking a tool, the agent's runtime verifies the tool's contract integrity.</li>
+        <li><strong>Tool verifies agent.</strong> Before accepting an invocation, the tool verifies the agent's identity.</li>
+        <li><strong>Policy evaluation.</strong> The runtime evaluates whether the verified agent's capabilities authorize it to use the verified tool.</li>
+        <li><strong>Audit recording.</strong> Both verifications and the policy decision are recorded in the cryptographic audit journal.</li>
+      </ol>
+    </section>
+
+    <!-- 7. Policy Enforcement -->
+    <section class="section" id="policy">
+      <div class="section-divider"></div>
+      <div class="section-number">Section 08</div>
+      <h2>Policy Enforcement Layer</h2>
+
+      <h3>8.1 Policy Engine Requirements</h3>
+      <p>An OATS-compliant runtime <span class="req-tag req-must">MUST</span> include a policy engine that evaluates the tuple <code>(action, context, identity)</code> and produces an authorization decision. The policy engine:</p>
+      <ul>
+        <li><span class="req-tag req-must">MUST</span> support five authorization decisions: Allow, Deny, Modify, Step-Up, Defer.</li>
+        <li><span class="req-tag req-must">MUST</span> evaluate both static policy and accumulated session context.</li>
+        <li><span class="req-tag req-must">MUST</span> operate outside LLM influence.</li>
+        <li><span class="req-tag req-should">SHOULD</span> support a formally verifiable policy language (Cedar, OPA, or equivalent).</li>
+        <li><span class="req-tag req-must">MUST</span> default to deny.</li>
+      </ul>
+
+      <h3>8.2 Action Classification</h3>
+      <ul>
+        <li><strong>Structurally forbidden.</strong> Actions that cannot be expressed through the tool contract layer. Eliminated before reaching the policy engine.</li>
+        <li><strong>Policy-forbidden.</strong> Actions expressible through tool contracts but always blocked by policy regardless of context.</li>
+        <li><strong>Context-dependent deny.</strong> Actions allowed by static policy but blocked when session context reveals inconsistency with stated intent.</li>
+        <li><strong>Context-dependent allow.</strong> Actions denied by default policy but permitted when context demonstrates clear alignment with legitimate intent.</li>
+        <li><strong>Context-dependent defer.</strong> Actions whose risk cannot be conclusively determined.</li>
+      </ul>
+
+      <h3>8.3 Context Accumulation</h3>
+      <p>An OATS-compliant runtime <span class="req-tag req-must">MUST</span> accumulate session context across actions. The context accumulator maintains:</p>
+      <ul>
+        <li><strong>Original request.</strong> The user's initial instruction establishing intent.</li>
+        <li><strong>Action history.</strong> The sequence of actions proposed, approved, denied, deferred, and executed.</li>
+        <li><strong>Data classification.</strong> The sensitivity level of information accessed.</li>
+        <li><strong>Tool outputs.</strong> Results returned from previous actions.</li>
+        <li><strong>Semantic distance.</strong> How far the current action has drifted from the original request.</li>
+        <li><strong>Identity context.</strong> Verified identities of the agent, user, and tools involved.</li>
+      </ul>
+
+      <h3>8.4 Semantic Distance Tracking</h3>
+      <p>An OATS-compliant runtime <span class="req-tag req-should">SHOULD</span> compute semantic distance between actions and stated intent to detect intent drift. Cumulative drift <span class="req-tag req-should">SHOULD</span> be tracked across action sequences, not only per-action.</p>
+
+      <h3>8.5 Step-Up Authorization</h3>
+      <p>For ambiguous cases, the runtime <span class="req-tag req-must">MUST</span> support step-up authorization workflows. Action execution blocks until an approval decision is received. Full action context must be available to approvers. Configurable timeouts are enforced; deny on timeout is the default.</p>
+
+      <h3>8.6 Deferral</h3>
+      <p>Deferred actions remain paused without producing effects. The runtime tracks deferred actions and maintains their execution order. Cascading deferrals are bounded: when concurrently deferred actions exceed a configurable limit, subsequent actions are denied.</p>
+    </section>
+
+    <!-- 8. Audit Layer -->
+    <section class="section" id="audit">
+      <div class="section-divider"></div>
+      <div class="section-number">Section 09</div>
+      <h2>Audit Layer</h2>
+
+      <h3>9.1 Journal Requirements</h3>
+      <p>An OATS-compliant runtime <span class="req-tag req-must">MUST</span> maintain a cryptographic audit journal recording all events in the ORGA loop. The journal is the authoritative record of what happened, when, why, and by whose authority.</p>
+
+      <h3>9.2 Event Types</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Event</th>
+            <th>When</th>
+            <th>Content</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>LoopStarted</strong></td>
+            <td>Loop begins</td>
+            <td>Configuration, agent identity, original request</td>
+          </tr>
+          <tr>
+            <td><strong>ReasoningComplete</strong></td>
+            <td>After LLM response, before Gate</td>
+            <td>Proposed actions, token usage</td>
+          </tr>
+          <tr>
+            <td><strong>PolicyEvaluated</strong></td>
+            <td>After Gate decision</td>
+            <td>Actions evaluated, decisions, matching policies, reasons</td>
+          </tr>
+          <tr>
+            <td><strong>ToolsDispatched</strong></td>
+            <td>After tool execution</td>
+            <td>Tools invoked, parameters, duration, evidence hashes</td>
+          </tr>
+          <tr>
+            <td><strong>ObservationsCollected</strong></td>
+            <td>After collecting results</td>
+            <td>Observation count, context size</td>
+          </tr>
+          <tr>
+            <td><strong>LoopTerminated</strong></td>
+            <td>Loop ends</td>
+            <td>Reason, iterations, total usage, duration</td>
+          </tr>
+          <tr>
+            <td><strong>RecoveryTriggered</strong></td>
+            <td>On tool failure</td>
+            <td>Strategy, error context</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>9.3 Cryptographic Properties</h3>
+      <p>Each journal entry <span class="req-tag req-must">MUST</span> include:</p>
+      <ul>
+        <li><strong>Ed25519 signature</strong> (or equivalent; ECDSA P-256 also acceptable). The signature covers the canonical serialization of the entry contents.</li>
+        <li><strong>Hash chain link.</strong> Each entry includes the cryptographic hash of the previous entry, forming an append-only chain that detects retroactive modification.</li>
+        <li><strong>Timestamp.</strong> Cryptographic timestamp for temporal ordering.</li>
+      </ul>
+      <p>Journal entries <span class="req-tag req-must">MUST</span> be verifiable offline.</p>
+
+      <h3>9.4 Evidence Envelopes</h3>
+      <p>Tool executions <span class="req-tag req-must">MUST</span> produce structured evidence envelopes containing: tool name and version, validated parameters, constructed invocation, duration and exit status, output hash (SHA-256), policy decision that authorized execution, and agent and user identity at time of execution.</p>
+
+      <h3>9.5 Compliance Properties</h3>
+      <p>The journal provides: <strong>HIPAA</strong> audit trail, <strong>SOC2</strong> evidence, <strong>SOX</strong> audit trail, and <strong>GDPR</strong> accountability records.</p>
+    </section>
+
+    <!-- 9. Sandboxing -->
+    <section class="section" id="sandboxing">
+      <div class="section-divider"></div>
+      <div class="section-number">Section 10</div>
+      <h2>Sandboxing and Isolation</h2>
+
+      <h3>10.1 Multi-Tier Sandboxing</h3>
+      <p>An OATS-compliant runtime <span class="req-tag req-should">SHOULD</span> support multiple sandboxing tiers:</p>
+      <ul>
+        <li><strong>Tier 1: Container isolation.</strong> Agent execution within container boundaries with resource limits, network restrictions, and filesystem isolation.</li>
+        <li><strong>Tier 2: Kernel-level isolation.</strong> Agent execution within a user-space kernel (e.g., gVisor) providing syscall filtering without full virtualization overhead.</li>
+        <li><strong>Tier 3: Microkernel isolation.</strong> Agent execution within a lightweight VM (e.g., Firecracker) providing hardware-level isolation with minimal overhead.</li>
+      </ul>
+
+      <h3>10.2 Resource Limits</h3>
+      <p>Regardless of sandboxing tier, agent execution <span class="req-tag req-must">MUST</span> support configurable resource limits: token budget, time budget, iteration budget, tool call budget, network restrictions, and filesystem restrictions.</p>
+
+      <h3>10.3 Circuit Breakers</h3>
+      <p>Tool executions <span class="req-tag req-should">SHOULD</span> be protected by circuit breakers. When a tool fails repeatedly, the circuit breaker trips and subsequent calls are rejected without execution until the circuit resets.</p>
+    </section>
+
+    <!-- 10. Inter-Agent -->
+    <section class="section" id="inter-agent">
+      <div class="section-divider"></div>
+      <div class="section-number">Section 11</div>
+      <h2>Inter-Agent Communication</h2>
+
+      <h3>11.1 Communication Governance</h3>
+      <p>When agents communicate with other agents, all inter-agent messages <span class="req-tag req-must">MUST</span> pass through a communication policy gate. The gate evaluates authorization rules on communication primitives (ask, delegate, send, parallel, race) before execution.</p>
+
+      <h3>11.2 Message Security</h3>
+      <p>Inter-agent messages <span class="req-tag req-must">MUST</span> be cryptographically signed (Ed25519 or equivalent), encrypted (AES-256-GCM or equivalent), and attributed to verified agent identities.</p>
+
+      <h3>11.3 Delegation Constraints</h3>
+      <p>Delegation chains <span class="req-tag req-must">MUST</span> be bounded: maximum delegation depth (configurable), capability narrowing (a delegated agent cannot exceed the delegating agent's capabilities), and blast-radius containment.</p>
+
+      <h3>11.4 Cross-Agent Context</h3>
+      <p>When an agent delegates to another agent, the session context <span class="req-tag req-should">SHOULD</span> be propagated to the downstream agent, enabling the downstream agent's Gate to evaluate actions against the original intent.</p>
+    </section>
+
+    <!-- 11. Conformance -->
+    <section class="section" id="conformance">
+      <div class="section-divider"></div>
+      <div class="section-number">Section 12</div>
+      <h2>Conformance Requirements</h2>
+
+      <h3>12.1 Conformance Levels</h3>
+      <p><strong>OATS Core</strong> (satisfies all MUST requirements): Provides baseline zero-trust agent execution.</p>
+      <p><strong>OATS Extended</strong> (satisfies all MUST and SHOULD requirements): Provides comprehensive zero-trust agent execution with identity, sandboxing, and advanced policy features.</p>
+
+      <h3>12.2 Core Requirements</h3>
+      <ul>
+        <li><strong>C1: ORGA Loop Enforcement.</strong> The runtime <span class="req-tag req-must">MUST</span> implement the four-phase ORGA loop. The Gate phase <span class="req-tag req-must">MUST</span> execute before every tool dispatch.</li>
+        <li><strong>C2: Tool Contract Support.</strong> The runtime <span class="req-tag req-must">MUST</span> support declarative tool contracts with typed parameter validation. The LLM <span class="req-tag req-must">MUST NOT</span> generate raw tool invocations.</li>
+        <li><strong>C3: Policy Evaluation.</strong> The runtime <span class="req-tag req-must">MUST</span> evaluate actions against policy before execution. Default stance <span class="req-tag req-must">MUST</span> be deny.</li>
+        <li><strong>C4: Context Accumulation.</strong> The runtime <span class="req-tag req-must">MUST</span> accumulate session context across actions.</li>
+        <li><strong>C5: Cryptographic Audit Journal.</strong> The runtime <span class="req-tag req-must">MUST</span> maintain a hash-chained, cryptographically signed audit journal.</li>
+        <li><strong>C6: Gate Independence.</strong> The Gate phase <span class="req-tag req-must">MUST</span> operate on structured inputs only.</li>
+        <li><strong>C7: Evidence Envelopes.</strong> Tool executions <span class="req-tag req-must">MUST</span> produce structured evidence envelopes.</li>
+      </ul>
+
+      <h3>12.3 Extended Requirements</h3>
+      <ul>
+        <li><strong>E1: Tool Integrity Verification.</strong> <span class="req-tag req-should">SHOULD</span> verify tool contract signatures with domain-anchored cryptographic verification.</li>
+        <li><strong>E2: Agent Identity Verification.</strong> <span class="req-tag req-should">SHOULD</span> verify agent identity with domain-anchored credentials.</li>
+        <li><strong>E3: Semantic Distance Tracking.</strong> <span class="req-tag req-should">SHOULD</span> compute and track semantic distance between actions and intent.</li>
+        <li><strong>E4: Multi-Tier Sandboxing.</strong> <span class="req-tag req-should">SHOULD</span> support configurable sandboxing tiers.</li>
+        <li><strong>E5: Inter-Agent Governance.</strong> <span class="req-tag req-should">SHOULD</span> enforce authorization policies on inter-agent communication.</li>
+        <li><strong>E6: Telemetry Export.</strong> <span class="req-tag req-should">SHOULD</span> export structured telemetry to security platforms.</li>
+        <li><strong>E7: Formally Verifiable Policies.</strong> <span class="req-tag req-should">SHOULD</span> use a formally verifiable policy language.</li>
+        <li><strong>E8: Least-Privilege Credential Scoping.</strong> <span class="req-tag req-should">SHOULD</span> support just-in-time credential issuance.</li>
+      </ul>
+
+      <h3>12.4 Verification Methodology</h3>
+      <p>For each Core requirement, the specification defines a verification procedure:</p>
+      <ul>
+        <li><strong>C1:</strong> Attempt to construct a code path from Reason to Act that bypasses Gate. Must be a compile error (typestate) or caught by verified test suite.</li>
+        <li><strong>C2:</strong> Submit tool parameters containing shell metacharacters. Verify rejection. Verify LLM never receives raw invocation strings.</li>
+        <li><strong>C3:</strong> Configure Deny policy. Submit matching action. Verify no effects and denial recorded.</li>
+        <li><strong>C4:</strong> Execute a sequence of actions. Verify policy engine receives accumulated context for each.</li>
+        <li><strong>C5:</strong> Generate journal entries. Verify fields, signatures, hash chain. Tamper with entry and verify detection.</li>
+        <li><strong>C6:</strong> Inspect Gate implementation. Verify no natural language parsing, no shared mutable state with LLM.</li>
+        <li><strong>C7:</strong> Execute a tool. Verify evidence envelope completeness.</li>
+      </ul>
+    </section>
+
+    <!-- 12. Implementations -->
+    <section class="section" id="implementations">
+      <div class="section-divider"></div>
+      <div class="section-number">Section 13</div>
+      <h2>Implementation Architectures</h2>
+      <p>OATS does not mandate a specific implementation architecture. The specification defines what a compliant runtime must do, not how it must be implemented.</p>
+
+      <h3>13.1 Self-Hosted Runtimes</h3>
+      <p>For organizations that control their agent infrastructure, the full OATS stack can be deployed as a single runtime. This provides the strongest guarantees: compile-time enforcement, full context visibility, cryptographic identity, and multi-tier isolation.</p>
+
+      <h3>13.2 Plugin/Extension Model</h3>
+      <p>For agents that run inside third-party platforms, OATS compliance can be achieved through a layered approach:</p>
+      <ul>
+        <li><strong>Inner layer (awareness):</strong> A plugin or extension running inside the agent platform provides tool discovery, audit logging, and advisory policy evaluation.</li>
+        <li><strong>Outer layer (enforcement):</strong> The agent platform runs inside an OATS-compliant runtime. The outer runtime's ORGA Gate provides hard enforcement that the inner plugin cannot bypass.</li>
+      </ul>
+
+      <h3>13.3 Gateway Architecture</h3>
+      <p>For protocol-based tool invocations (MCP, REST APIs), an OATS-compliant gateway can intercept all traffic between agents and tools. The gateway implements the Gate phase, context accumulation, and audit journaling without modifying agent code.</p>
+
+      <h3>13.4 Vendor Integration</h3>
+      <p>For SaaS agents where organizations control none of the infrastructure, OATS conformance requires vendor cooperation. Vendors must provide synchronous pre-execution hooks, decision enforcement, context availability, and receipt export.</p>
+    </section>
+
+    <!-- 13. Research -->
+    <section class="section" id="research">
+      <div class="section-divider"></div>
+      <div class="section-number">Section 14</div>
+      <h2>Research Directions</h2>
+
+      <h3>14.1 Typestate in Non-Rust Languages</h3>
+      <p>The compile-time enforcement guarantee is strongest in languages with typestate support (Rust, potentially Haskell, Scala with phantom types). Providing equivalent guarantees in Python, JavaScript, and Go requires either runtime enforcement with formal verification, or code generation from a verified specification.</p>
+
+      <h3>14.2 Data Flow Through Context Windows</h3>
+      <p>Tracking data lineage through LLM context windows remains an open challenge. Data may be transformed, summarized, or paraphrased. Information-theoretic approaches (taint analysis, watermarking) are active research areas.</p>
+
+      <h3>14.3 Multi-Agent Trust Coordination</h3>
+      <p>As agents delegate across organizational boundaries, maintaining coherent trust chains requires distributed tracing standards, federated receipt verification, and cross-domain policy negotiation.</p>
+
+      <h3>14.4 Formal Verification of the ORGA Loop</h3>
+      <p>Formal verification of the entire loop (including policy engine correctness, context accumulator completeness, and journal integrity) would provide stronger assurance than typestate enforcement alone.</p>
+
+      <h3>14.5 Approval Fatigue and Deferral Resolution</h3>
+      <p>Balancing security against usability remains an open design challenge. ML-based approval recommendation, batch approval, and progressive autonomy are active research directions.</p>
+
+      <h3>14.6 Vector Embedding Security</h3>
+      <p>When semantic distance tracking uses vector embeddings, the embeddings themselves become a security surface. Research into watermarking, steganographic attack detection, and quantization-robust integrity verification is needed.</p>
+    </section>
+
+    <!-- 14. Conclusion -->
+    <section class="section" id="conclusion">
+      <div class="section-divider"></div>
+      <div class="section-number">Section 15</div>
+      <h2>Conclusion</h2>
+
+      <div class="pillars">
+        <div class="pillar">
+          <div class="pillar-number">Principle</div>
+          <h4>Allow-List Over Deny-List</h4>
+          <p>Tool contracts make dangerous actions structurally inexpressible.</p>
+        </div>
+        <div class="pillar">
+          <div class="pillar-number">Principle</div>
+          <h4>Compile-Time Over Runtime</h4>
+          <p>The ORGA typestate makes invalid phase transitions compile errors.</p>
+        </div>
+        <div class="pillar">
+          <div class="pillar-number">Principle</div>
+          <h4>Structural Over Assumed</h4>
+          <p>The Gate operates outside LLM influence through structural isolation.</p>
+        </div>
+      </div>
+
+      <p>These convictions are not theoretical. The architecture specified here has been validated through approximately eight months of autonomous operation in a production runtime (Symbiont, by ThirdKey AI), including a catastrophic disaster recovery scenario where the runtime rebuilt itself using its own agent infrastructure after a total codebase loss.</p>
+      <p>By publishing this specification as an open standard, we aim to establish baseline requirements that preserve interoperability and buyer choice. The goal is not to build OATS, but to define what an OATS-compliant system must do, enabling the market to compete on implementation quality rather than category definition.</p>
+    </section>
+
+    <!-- References -->
+    <section class="section" id="references">
+      <div class="section-divider"></div>
+      <div class="section-number">References</div>
+      <h2>References</h2>
+      <ul class="ref-list">
+        <li>Anthropic. "Model Context Protocol Specification." 2024. <a href="https://modelcontextprotocol.io">modelcontextprotocol.io</a></li>
+        <li>Amazon Web Services. "Cedar: A Language for Defining Permissions as Policies." 2023. <a href="https://www.cedarpolicy.com">cedarpolicy.com</a></li>
+        <li>Chuvakin, A. "Cloud CISO Perspectives: How Google secures AI Agents." Google Cloud Blog, June 2025.</li>
+        <li>Debenedetti, E. et al. "AgentDojo: A Dynamic Environment to Evaluate Attacks and Defenses for LLM Agents." arXiv:2406.13352, 2024.</li>
+        <li>Errico, H. "Autonomous Action Runtime Management (AARM)." arXiv:2602.09433v1, 2026.</li>
+        <li>Gaire, S. et al. "Systematization of Knowledge: Security and Safety in the MCP Ecosystem." arXiv:2512.08290, 2025.</li>
+        <li>Gregg, B. "BPF Performance Tools." Addison-Wesley, 2019.</li>
+        <li>Greshake, K. et al. "Not What You've Signed Up For: Compromising Real-World LLM-Integrated Applications with Indirect Prompt Injection." AISec Workshop at ACM CCS, 2023.</li>
+        <li>Hardy, N. "The Confused Deputy: (or why capabilities might have been invented)." ACM SIGOPS, 1988.</li>
+        <li>Microsoft. "Governance and security for AI agents across the organization." Cloud Adoption Framework, 2024.</li>
+        <li>Miller, M. S. "Robust Composition: Towards a Unified Approach to Access Control and Concurrency Control." Ph.D. dissertation, Johns Hopkins University, 2006.</li>
+        <li>National Institute of Standards and Technology. "AI Risk Management Framework (AI RMF 1.0)." 2023.</li>
+        <li>Open Policy Agent. "OPA: Policy-based control for cloud native environments." 2024. <a href="https://www.openpolicyagent.org">openpolicyagent.org</a></li>
+        <li>OWASP Foundation. "OWASP Top 10 for Large Language Model Applications." 2024.</li>
+        <li>Raza, S. et al. "TRiSM for Agentic AI." arXiv:2506.04133, 2025.</li>
+        <li>Reber, D. "The Agentic AI Security Scoping Matrix." AWS Security Blog, November 2024.</li>
+        <li>Ruan, Y. et al. "The Emerged Security and Privacy of LLM Agent: A Survey with Case Studies." arXiv:2407.19354, 2024.</li>
+        <li>Su, H. et al. "A Survey on Autonomy-Induced Security Risks in Large Model-Based Agents." arXiv:2506.23844, 2025.</li>
+        <li>Wanger, J. "AgentPin Technical Specification v0.2.0." ThirdKey AI, 2026. <a href="https://agentpin.org">agentpin.org</a></li>
+        <li>Wanger, J. "SchemaPin Protocol Specification." ThirdKey AI, 2025. <a href="https://schemapin.org">schemapin.org</a></li>
+        <li>Wanger, J. "Symbiont Runtime Architecture." ThirdKey AI, 2026. <a href="https://symbiont.dev">symbiont.dev</a></li>
+        <li>Wanger, J. "ToolClad: Declarative Tool Interface Contracts for Agentic Runtimes v0.5.1." ThirdKey AI, 2026.</li>
+        <li>Wu, Q. et al. "Security of AI Agents." arXiv:2406.08689, 2024.</li>
+        <li>Ye, Q. et al. "ToolEmu: Identifying Risky Real-World Agent Failures with a Language Model Emulator." ICLR, 2024.</li>
+      </ul>
+    </section>
+
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-links">
+      <a href="https://thirdkey.ai">ThirdKey AI</a>
+      <a href="https://symbiont.dev">Symbiont Runtime</a>
+      <a href="https://schemapin.org">SchemaPin</a>
+      <a href="https://agentpin.org">AgentPin</a>
+      <a href="https://toolclad.org">ToolClad</a>
+    </div>
+    <div class="footer-copy">Open Agent Trust Stack (OATS) &mdash; Zero-trust agent execution through structural enforcement.</div>
+  </footer>
+
+</div>
+
+<script>
+  // Sidebar toggle (mobile)
+  function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.menu-toggle').classList.toggle('open');
+  }
+
+  // Close sidebar on nav click (mobile)
+  document.querySelectorAll('.sidebar-nav a').forEach(link => {
+    link.addEventListener('click', () => {
+      if (window.innerWidth <= 768) {
+        document.getElementById('sidebar').classList.remove('open');
+        document.querySelector('.menu-toggle').classList.remove('open');
+      }
+    });
+  });
+
+  // Scroll spy
+  const sections = document.querySelectorAll('.section[id]');
+  const navLinks = document.querySelectorAll('.sidebar-nav a[href^="#"]');
+
+  function updateActiveNav() {
+    const scrollPos = window.scrollY + 120;
+
+    let current = '';
+    sections.forEach(section => {
+      if (section.offsetTop <= scrollPos) {
+        current = section.getAttribute('id');
+      }
+    });
+
+    navLinks.forEach(link => {
+      link.classList.toggle('active', link.getAttribute('href') === '#' + current);
+    });
+  }
+
+  window.addEventListener('scroll', updateActiveNav, { passive: true });
+  updateActiveNav();
+
+  // Stagger section animations on scroll
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.style.animationPlayState = 'running';
+      }
+    });
+  }, { threshold: 0.05 });
+
+  sections.forEach(s => {
+    s.style.animationPlayState = 'paused';
+    observer.observe(s);
+  });
+</script>
+
+</body>
+</html>
