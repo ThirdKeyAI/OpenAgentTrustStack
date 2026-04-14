@@ -393,6 +393,18 @@
       position: relative;
     }
 
+    .katex { font-size: 1.05em; color: var(--text-primary); }
+    .katex-display {
+      margin: 1.5rem 0;
+      padding: 1rem 1.25rem;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+    .katex-display > .katex { color: var(--text-primary); }
+
     pre code {
       background: none;
       padding: 0;
@@ -697,6 +709,9 @@
     .section:nth-child(2) { animation-delay: 0.1s; }
     .section:nth-child(3) { animation-delay: 0.15s; }
   </style>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous" onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false},{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}],throwOnError:false});"></script>
 </head>
 <body>
 
@@ -884,48 +899,55 @@
       <p>This section formalizes the system model, action definitions, and security objectives that the remainder of the specification builds upon.</p>
 
       <h3>3.1 System Model</h3>
-      <p>Let an AI-enabled application <em>A</em> consist of:</p>
+      <p>Let an AI-enabled application \(\mathcal{A}\) consist of:</p>
       <ul>
-        <li>An <strong>orchestration layer</strong> <em>O</em> (agent framework, workflow engine, or application code) that interprets user requests and invokes tools. <em>O</em> includes the LLM, prompt templates, memory systems, and control flow logic. Crucially, <em>O</em> processes untrusted inputs and cannot be assumed to behave as intended.</li>
-        <li>A set of <strong>tools</strong> <em>T = {t<sub>1</sub>, t<sub>2</sub>, ..., t<sub>n</sub>}</em>, where each tool <em>t<sub>i</sub></em> exposes operations producing effects on external systems.</li>
-        <li>An <strong>identity context</strong> <em>I</em> comprising four layers: human principal, service identity, agent/session identity, and role/privilege scope.</li>
-        <li>An <strong>environment</strong> <em>E</em> including data stores, APIs, cloud services, and enterprise systems.</li>
-        <li>A <strong>session context</strong> <em>C</em> that accumulates state over the course of an interaction.</li>
+        <li>An <strong>orchestration layer</strong> \(O\) (agent framework, workflow engine, or application code) that interprets user requests and invokes tools. \(O\) includes the LLM, prompt templates, memory systems, and control flow logic. Crucially, \(O\) processes untrusted inputs and cannot be assumed to behave as intended.</li>
+        <li>A set of <strong>tools</strong> \(T = \{t_1, t_2, \ldots, t_n\}\), where each tool \(t_i\) exposes operations producing effects on external systems.</li>
+        <li>An <strong>identity context</strong> \(I\) comprising four layers: human principal, service identity, agent/session identity, and role/privilege scope.</li>
+        <li>An <strong>environment</strong> \(E\) including data stores, APIs, cloud services, and enterprise systems.</li>
+        <li>A <strong>session context</strong> \(C\) that accumulates state over the course of an interaction.</li>
       </ul>
 
       <h3>3.2 Action Definition</h3>
-      <p>An action <em>a</em> is a discrete operation the agent requests against a tool:</p>
-      <pre><code>a = (t, op, p, id, ctx, ts)</code></pre>
-      <p>where <em>t ∈ T</em> is the target tool, <em>op</em> is the specific operation, <em>p</em> is the parameter set, <em>id ∈ I</em> is the identity context, <em>ctx ∈ C</em> is the accumulated session context, and <em>ts</em> is the timestamp.</p>
+      <p>An action \(a\) is a discrete operation the agent requests against a tool:</p>
+      <p>$$a = (t,\ op,\ p,\ id,\ ctx,\ ts)$$</p>
+      <p>where \(t \in T\) is the target tool, \(op\) is the specific operation, \(p\) is the parameter set, \(id \in I\) is the identity context, \(ctx \in C\) is the accumulated session context, and \(ts\) is the timestamp.</p>
 
       <h3>3.3 Tool Contract Definition</h3>
-      <p>A tool contract <em>κ</em> defines the complete behavioral interface for a tool:</p>
-      <pre><code>κ = (name, Π, τ, σ_out, μ, ρ)</code></pre>
-      <p>where <em>Π = {π<sub>1</sub>, ..., π<sub>m</sub>}</em> is the set of typed parameter definitions, <em>τ</em> is the invocation template, <em>σ<sub>out</sub></em> is the output schema, <em>μ</em> is the policy metadata (resource, action), and <em>ρ</em> is the risk tier.</p>
-      <p>Each parameter definition specifies the parameter name, its type from the type system, validation constraints, and whether it is required. The type system provides at minimum: <code>string, integer, boolean, enum, scope_target, url, path, ip_address, cidr, port</code>. Each type has an associated validation function and a sanitization function that strips dangerous characters.</p>
+      <p>A tool contract \(\kappa\) defines the complete behavioral interface for a tool:</p>
+      <p>$$\kappa = (name,\ \Pi,\ \tau,\ \sigma_{out},\ \mu,\ \rho)$$</p>
+      <p>where \(\Pi = \{\pi_1, \ldots, \pi_m\}\) is the set of typed parameter definitions, \(\tau\) is the invocation template, \(\sigma_{out}\) is the output schema, \(\mu\) is the policy metadata (resource, action), and \(\rho\) is the risk tier.</p>
+      <p>Each parameter definition \(\pi_i = (name_i,\ type_i,\ V_i,\ req_i)\) specifies the parameter name, its type from the type system \(\mathcal{T}\), validation constraints \(V_i\), and whether it is required. The type system \(\mathcal{T}\) provides:</p>
+      <p>$$\mathcal{T} = \{\textit{string},\ \textit{integer},\ \textit{boolean},\ \textit{enum},\ \textit{scope\_target},\ \textit{url},\ \textit{path},\ \textit{ip\_address},\ \textit{cidr},\ \textit{port}\}$$</p>
+      <p>Each type \(\tau \in \mathcal{T}\) has an associated validation function \(v_\tau : \text{Value} \to \{valid, invalid\}\) and a sanitization function \(s_\tau : \text{Value} \to \text{Value}\) that strips dangerous characters.</p>
 
       <h3>3.4 Constrained Action Formulation</h3>
-      <p>Under OATS, the agent does not formulate arbitrary actions. Instead, the agent proposes a <em>parameterized invocation</em> <code>a' = (t, op, p')</code> where <code>p'</code> maps parameter names to values. The runtime validates each value against its declared type. If validation succeeds, the runtime constructs the executable action from the template: <code>a_exec = τ(p')</code>.</p>
-      <p>The agent never sees or constructs <em>a<sub>exec</sub></em>. This is the allow-list property: the space of expressible actions is constrained to those producible from valid parameter sets applied to contract templates.</p>
+      <p>Under OATS, the agent does not formulate arbitrary actions. Instead, the agent proposes a <em>parameterized invocation</em>:</p>
+      <p>$$a' = (t,\ op,\ p')$$</p>
+      <p>where \(p' = \{(name_i, val_i)\}\) maps parameter names to values. The runtime validates each value:</p>
+      <p>$$\forall (name_i, val_i) \in p' :\ v_{type_i}(val_i) = valid$$</p>
+      <p>If validation succeeds, the runtime constructs the executable action from the template:</p>
+      <p>$$a_{exec} = \tau(p')\ \text{where } \tau \text{ is the invocation template}$$</p>
+      <p>The agent never sees or constructs \(a_{exec}\). This is the allow-list property: the space of expressible actions is constrained to \(\{a_{exec} : a_{exec} = \tau(p'),\ \forall (name_i, val_i) \in p',\ v_{type_i}(val_i) = valid\}\).</p>
 
       <h3>3.5 Context Accumulation</h3>
       <p>Session context accumulates across actions:</p>
-      <pre><code>C_n = C_{n-1} ∪ {a_n, o_n, δ_n}</code></pre>
-      <p>where <em>C<sub>n</sub></em> is the context after action <em>n</em>, <em>a<sub>n</sub></em> is the action, <em>o<sub>n</sub></em> is its output, and <em>δ<sub>n</sub></em> represents derived signals including data classification, semantic distance from the original request, scope expansion indicators, entity references, and confidence level.</p>
+      <p>$$C_n = C_{n-1} \cup \{a_n,\ o_n,\ \delta_n\}$$</p>
+      <p>where \(C_n\) is the context after action \(n\), \(a_n\) is the action, \(o_n\) is its output, and \(\delta_n\) represents derived signals including data classification, semantic distance from the original request, scope expansion indicators, entity references, and confidence level.</p>
 
       <h3>3.6 Policy Structure</h3>
-      <p>A policy <em>π ∈ Π</em> maps an action-context-identity triple to an authorization decision:</p>
-      <pre><code>π : (a, C, I) → {ALLOW, DENY, MODIFY, STEP_UP, DEFER}</code></pre>
-      <p>Each policy consists of a match predicate, a decision, a priority, and an optional modification function applied when the decision is <code>MODIFY</code>.</p>
+      <p>A policy \(\pi \in \Pi\) maps an action-context-identity triple to an authorization decision:</p>
+      <p>$$\pi : (a,\ C,\ I) \to \{\textit{ALLOW},\ \textit{DENY},\ \textit{MODIFY},\ \textit{STEP\_UP},\ \textit{DEFER}\}$$</p>
+      <p>Each policy consists of a match predicate \(m(a, C, I) \to \{true, false\}\), a decision \(d\), a priority \(p \in \mathbb{N}\), and an optional modification function \(f(a) \to a'\) applied when \(d = \textit{MODIFY}\).</p>
 
       <h3>3.7 Security Objectives</h3>
-      <p>An OATS-compliant runtime MUST ensure that for all actions <em>a</em>:</p>
+      <p>An OATS-compliant runtime MUST ensure that for all actions \(a\):</p>
       <ol>
-        <li><strong>Structural constraint.</strong> <em>a</em> is expressible only through a valid tool contract <em>κ</em>.</li>
-        <li><strong>Pre-execution interception.</strong> <em>a</em> is intercepted and evaluated before any effects occur.</li>
+        <li><strong>Structural constraint.</strong> \(a\) is expressible only through a valid tool contract \(\kappa\).</li>
+        <li><strong>Pre-execution interception.</strong> \(a\) is intercepted and evaluated before any effects occur.</li>
         <li><strong>Compile-time gate guarantee.</strong> All code paths from action proposal to tool dispatch pass through the Gate phase; this is verified at compile time.</li>
-        <li><strong>Policy compliance.</strong> <em>a</em> satisfies organizational policy given context <em>C</em> and identity <em>I</em>.</li>
-        <li><strong>Context-aware evaluation.</strong> <em>a</em> is evaluated against both static policy and accumulated session context.</li>
+        <li><strong>Policy compliance.</strong> \(a\) satisfies organizational policy \(\Pi\) given context \(C\) and identity \(I\).</li>
+        <li><strong>Context-aware evaluation.</strong> \(a\) is evaluated against both static policy and accumulated session context.</li>
         <li><strong>Identity verification.</strong> Both the agent invoking a tool and the tool being invoked are cryptographically verified.</li>
         <li><strong>Forensic completeness.</strong> Every action, its context, the policy decision, and the execution outcome are recorded in a tamper-evident journal.</li>
       </ol>
