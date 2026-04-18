@@ -789,6 +789,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous">
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous" onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false},{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}],throwOnError:false});"></script>
+  <link rel="stylesheet" href="diagrams.css">
 </head>
 <body>
 
@@ -926,6 +927,15 @@
 
       <p>OATS specifies five layers: <strong>(1)</strong> the ORGA reasoning loop with compile-time phase enforcement, <strong>(2)</strong> declarative tool contracts with typed parameter validation, <strong>(3)</strong> a cryptographic identity stack providing bidirectional trust between agents and tools, <strong>(4)</strong> a formally verifiable policy engine operating on structured inputs, and <strong>(5)</strong> hash-chained cryptographic audit journals with Ed25519 signatures for tamper-evident forensic reconstruction.</p>
       <p>OATS is model-agnostic, framework-agnostic, and vendor-neutral. The architecture is informed by operational experience with a production runtime (Symbiont) that has operated autonomously for approximately eight months; however, rigorous empirical evaluation remains ongoing and this version of the specification should be read as an architectural contribution with an accompanying evaluation framework rather than a fully validated system.</p>
+
+      <figure class="diagram" id="fig-0" data-diagram="fig0">
+        <span class="diagram-eyebrow">Figure 0 &middot; Trust stack</span>
+        <div class="fig0-stack"></div>
+        <div class="fig0-detail"></div>
+        <figcaption class="diagram-caption">
+          <strong>The trust stack.</strong> Five layers, each addressing a distinct security question. The ORGA loop (Layer 1) enforces that the Gate runs; tool contracts (Layer 2) constrain expressible actions; the identity stack (Layer 3) provides mutual authentication; the policy engine (Layer 4) evaluates authorization; the audit journal (Layer 5) records decisions. Click a layer for its conformance tie.
+        </figcaption>
+      </figure>
     </section>
 
     <!-- 1. Introduction -->
@@ -974,9 +984,6 @@
         <li><strong>Conformance requirements.</strong> Minimum requirements for OATS-compliant systems, enabling objective evaluation of implementations (Section 12).</li>
       </ol>
       <p>OATS's novelty is not any single component in isolation &mdash; typestates, policy engines, cryptographic signatures, audit logs, and sandboxing each have extensive prior art. The contribution is the integration of five layers into a unified runtime security model centered on consequential action execution, with three properties not found in prior work in combination: (a) expressibility constraints that eliminate action categories before policy evaluation, (b) compile-time enforcement that the policy gate executes on every dispatch path within the loop, and (c) bidirectional cryptographic identity binding actions to verified agents and verified tools. The conformance requirements formalize these properties into testable criteria, enabling objective comparison across implementations.</p>
-
-      <h3>1.4 Document Structure</h3>
-      <p>Section 2 reviews related work. Section 3 formalizes the problem and defines the system model. Section 4 characterizes the threat landscape. Section 5 presents the ORGA loop architecture. Section 6 specifies the tool contract layer. Section 7 specifies the identity layer. Section 8 specifies the policy enforcement layer. Section 9 specifies the audit layer. Section 10 addresses sandboxing and isolation. Section 11 addresses inter-agent communication. Section 12 defines conformance requirements. Section 13 presents implementation architectures. Section 14 defines the evaluation framework for empirical validation. Section 15 identifies known limitations. Section 16 identifies open research directions. Section 17 concludes.</p>
     </section>
 
     <!-- 2. Related Work -->
@@ -1233,6 +1240,84 @@ AgentLoop&lt;Observing&gt;    -- observe()       --&gt;  AgentLoop&lt;Reasoning&
 
       <h4>Verification</h4>
       <p>Conformance requirement C6 (Section 12) defines the verification procedure: inspect the Gate implementation, verify inputs are typed structs, verify no shared mutable references, verify no dynamic code paths parameterized by LLM output.</p>
+
+      <figure class="diagram" id="fig-1" data-diagram="fig1">
+        <span class="diagram-eyebrow">Figure 1 &middot; ORGA loop</span>
+        <div class="fig1-stage">
+          <svg class="dg-svg fig1-svg" viewBox="0 0 620 320" role="img" aria-label="ORGA loop diagram">
+            <defs>
+              <marker id="arrA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M0,0 L10,5 L0,10 z" fill="#c8a44e"/>
+              </marker>
+              <marker id="arrG" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M0,0 L10,5 L0,10 z" fill="#3a3a48"/>
+              </marker>
+              <marker id="arrR" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M0,0 L10,5 L0,10 z" fill="#c45050"/>
+              </marker>
+            </defs>
+
+            <g data-phase="observe" transform="translate(30,40)">
+              <rect class="box" width="140" height="70" rx="3"/>
+              <text class="label-mono-sm" x="12" y="22">L1 &middot; PHASE 01</text>
+              <text class="label-major" x="12" y="48">Observe</text>
+            </g>
+            <g data-phase="reason" transform="translate(230,40)">
+              <rect class="box" width="140" height="70" rx="3"/>
+              <text class="label-mono-sm" x="12" y="22">L1 &middot; PHASE 02</text>
+              <text class="label-major" x="12" y="48">Reason</text>
+            </g>
+            <g data-phase="gate" transform="translate(430,40)">
+              <rect class="box box-accent" width="160" height="70" rx="3"/>
+              <text class="label-mono-sm label-accent" x="12" y="22">L1 &middot; PHASE 03 &middot; GATE</text>
+              <text class="label-major" x="12" y="48">Gate</text>
+              <text class="label-mono-sm" x="12" y="63" style="fill:#6b6860">outside LLM influence</text>
+            </g>
+            <g data-phase="act" transform="translate(230,200)">
+              <rect class="box" width="140" height="70" rx="3"/>
+              <text class="label-mono-sm" x="12" y="22">L1 &middot; PHASE 04</text>
+              <text class="label-major" x="12" y="48">Act</text>
+            </g>
+
+            <text class="label-mono-sm" x="30" y="140" style="fill:#6b6860">LLM REGION</text>
+            <line x1="30" y1="145" x2="370" y2="145" stroke="#1e1e28" stroke-dasharray="2 3"/>
+            <text class="label-mono-sm" x="430" y="140" style="fill:#a08030">POLICY REGION &middot; ISOLATED</text>
+            <line x1="430" y1="145" x2="590" y2="145" stroke="#a08030" stroke-dasharray="2 3"/>
+
+            <path id="arr-or"   class="arrow" d="M170 75 L228 75" marker-end="url(#arrA)"/>
+            <path id="arr-rg"   class="arrow" d="M370 75 L428 75" marker-end="url(#arrA)"/>
+            <path id="arr-ga"   class="arrow" d="M510 112 L510 180 Q510 200 490 200 L372 200" marker-end="url(#arrA)"/>
+            <path id="arr-ao"   class="arrow" d="M230 235 L120 235 Q100 235 100 215 L100 112" marker-end="url(#arrA)"/>
+
+            <path id="arr-deny" class="arrow arrow-deny" d="M510 112 L510 270 Q510 288 490 288 L120 288 Q100 288 100 268 L100 112" marker-end="url(#arrR)"/>
+
+            <text x="180" y="30" class="label-mono-sm">observe()</text>
+            <text x="380" y="30" class="label-mono-sm">produce_output()</text>
+            <text x="505" y="165" class="label-mono-sm" text-anchor="end">check_policy()</text>
+            <text x="505" y="180" class="label-mono-sm" text-anchor="end">&rarr; dispatch()</text>
+            <text x="125" y="225" class="label-mono-sm">result</text>
+            <text x="310" y="303" class="label-mono-sm" text-anchor="middle" style="fill:#c45050">DENY &middot; denial reason fed back as observation</text>
+          </svg>
+
+          <div class="diagram-controls">
+            <span class="label">Scenario</span>
+            <button class="dg-btn fig1-scenario active" data-scenario="allow">Allowed action</button>
+            <button class="dg-btn fig1-scenario" data-scenario="deny">Denied action</button>
+            <span class="label" style="margin-left:auto">Step</span>
+            <button class="dg-btn fig1-prev">&lsaquo; Prev</button>
+            <button class="dg-btn fig1-next">Next &rsaquo;</button>
+            <button class="dg-btn fig1-play">Play</button>
+          </div>
+          <div class="fig1-legend">
+            <span><span class="swatch sw-arrow"></span>active transition</span>
+            <span><span class="swatch sw-deny"></span>deny feedback</span>
+          </div>
+          <p class="diagram-caption fig1-caption-dyn"></p>
+        </div>
+        <figcaption class="diagram-caption">
+          <strong>ORGA loop with typestate-enforced phase transitions.</strong> The Gate is mandatory and structurally independent of the LLM. Denied actions produce feedback observations; approved actions proceed to tool execution. Skipping Gate is a compile error, not a runtime bug.
+        </figcaption>
+      </figure>
     </section>
 
     <!-- 5. Tool Contracts -->
@@ -1280,6 +1365,68 @@ AgentLoop&lt;Observing&gt;    -- observe()       --&gt;  AgentLoop&lt;Reasoning&
 
       <h3>6.5 Schema Generation</h3>
       <p>Tool contracts <span class="req-tag req-should">SHOULD</span> support automatic generation of protocol-compatible schemas (e.g., MCP <code>inputSchema</code> and <code>outputSchema</code>) from the contract definition. The LLM understands tool capabilities through generated schemas without the contract format being exposed.</p>
+
+      <figure class="diagram" id="fig-2" data-diagram="fig2">
+        <span class="diagram-eyebrow">Figure 2 &middot; Deny-list vs. allow-list</span>
+
+        <div class="diagram-controls" style="border-top:none; padding-top:0; margin-top:0">
+          <span class="label">Parameter</span>
+          <div class="fig2-scenarios" style="display:flex; gap:.4rem; flex-wrap:wrap"></div>
+        </div>
+
+        <div class="fig2-input" style="margin-top:1rem">
+          <span class="diagram-eyebrow" style="position:static; padding-right:.5rem">input &rarr;</span>
+          <code></code>
+        </div>
+
+        <div class="fig2-grid">
+          <div class="fig2-col deny">
+            <h5>Deny-list (sandbox intercepts)</h5>
+            <svg class="dg-svg" viewBox="0 0 260 145" aria-hidden="true">
+              <defs>
+                <marker id="arrD" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                  <path d="M0,0 L10,5 L0,10 z" fill="#3a3a48"/>
+                </marker>
+              </defs>
+              <g transform="translate(10,12)"><rect class="box" width="100" height="36" rx="3"/><text class="label-mono" x="10" y="22">LLM emits</text></g>
+              <path class="arrow" d="M110 30 L120 30" marker-end="url(#arrD)"/>
+              <g transform="translate(120,12)"><rect class="box" width="130" height="36" rx="3"/><text class="label-mono" x="10" y="22">raw action</text></g>
+              <path class="arrow" d="M185 48 L185 72" marker-end="url(#arrD)"/>
+              <g transform="translate(120,72)"><rect class="box" width="130" height="40" rx="3"/>
+                <text class="label-mono" x="10" y="18">deny-list</text>
+                <text class="label-mono-sm" x="10" y="32">enumerate/match</text>
+              </g>
+              <text class="label-mono-sm" x="10" y="135" style="fill:#c45050">risk: novel bypass</text>
+            </svg>
+            <div class="outcome"></div>
+          </div>
+
+          <div class="fig2-col allow">
+            <h5>Allow-list (tool contract)</h5>
+            <svg class="dg-svg" viewBox="0 0 260 145" aria-hidden="true">
+              <defs>
+                <marker id="arrA2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                  <path d="M0,0 L10,5 L0,10 z" fill="#c8a44e"/>
+                </marker>
+              </defs>
+              <g transform="translate(10,12)"><rect class="box" width="100" height="36" rx="3"/><text class="label-mono" x="10" y="22">LLM fills</text></g>
+              <path class="arrow arrow-accent" d="M110 30 L120 30" marker-end="url(#arrA2)"/>
+              <g transform="translate(120,12)"><rect class="box box-accent" width="130" height="36" rx="3"/><text class="label-mono label-accent" x="10" y="22">typed params</text></g>
+              <path class="arrow arrow-accent" d="M185 48 L185 72" marker-end="url(#arrA2)"/>
+              <g transform="translate(120,72)"><rect class="box box-accent" width="130" height="40" rx="3"/>
+                <text class="label-mono label-accent" x="10" y="18">&tau;(p) template</text>
+                <text class="label-mono-sm" x="10" y="32" style="fill:#6b6860">constructed</text>
+              </g>
+              <text class="label-mono-sm" x="10" y="135" style="fill:#5a9a6a">danger inexpressible</text>
+            </svg>
+            <div class="outcome"></div>
+          </div>
+        </div>
+
+        <figcaption class="diagram-caption">
+          <strong>Deny-list vs. allow-list enforcement.</strong> In the allow-list model, the space of expressible actions is constrained by the tool contract before any policy evaluation occurs. Try the scenarios above to see why novel bypasses fall through a deny-list but cannot form under an allow-list at all.
+        </figcaption>
+      </figure>
     </section>
 
     <!-- 6. Identity Layer -->
@@ -1318,6 +1465,64 @@ AgentLoop&lt;Observing&gt;    -- observe()       --&gt;  AgentLoop&lt;Reasoning&
         <li><strong>Policy evaluation.</strong> The runtime evaluates whether the verified agent's capabilities authorize it to use the verified tool.</li>
         <li><strong>Audit recording.</strong> Both verifications and the policy decision are recorded in the cryptographic audit journal.</li>
       </ol>
+
+      <figure class="diagram" id="fig-3" data-diagram="fig3">
+        <span class="diagram-eyebrow">Figure 3 &middot; Bidirectional trust</span>
+        <svg class="dg-svg fig3-svg" viewBox="0 0 640 260" role="img" aria-label="Bidirectional trust diagram">
+          <defs>
+            <marker id="arrF3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="#c8a44e"/>
+            </marker>
+          </defs>
+
+          <g transform="translate(30,90)">
+            <rect class="box" width="140" height="80" rx="3"/>
+            <text class="label-mono-sm" x="12" y="22">PRINCIPAL</text>
+            <text class="label-major" x="12" y="48">Agent</text>
+            <text class="label-mono-sm" x="12" y="65" style="fill:#6b6860">scout / 2.1</text>
+          </g>
+
+          <g data-step="step-policy" tabindex="0" role="button" style="cursor:pointer">
+            <g transform="translate(250,90)">
+              <rect class="box" width="140" height="80" rx="3"/>
+              <text class="label-mono-sm label-accent" x="12" y="22">L4 &middot; GATE</text>
+              <text class="label-major" x="12" y="48">Policy</text>
+              <text class="label-mono-sm" x="12" y="65" style="fill:#6b6860">structured input only</text>
+            </g>
+          </g>
+
+          <g transform="translate(470,90)">
+            <rect class="box" width="140" height="80" rx="3"/>
+            <text class="label-mono-sm" x="12" y="22">RESOURCE</text>
+            <text class="label-major" x="12" y="48">Tool</text>
+            <text class="label-mono-sm" x="12" y="65" style="fill:#6b6860">finance.transfer</text>
+          </g>
+
+          <g data-step="step-schemapin" tabindex="0" role="button" style="cursor:pointer">
+            <path class="arrow arrow-accent" d="M170 115 Q320 30 540 115" marker-end="url(#arrF3)"/>
+            <rect x="240" y="38" width="160" height="24" rx="2" class="box-accent"/>
+            <text class="label-mono-sm label-accent" x="252" y="54">SchemaPin &middot; verify</text>
+          </g>
+
+          <g data-step="step-agentpin" tabindex="0" role="button" style="cursor:pointer">
+            <path class="arrow arrow-accent" d="M540 155 Q320 240 170 155" marker-end="url(#arrF3)"/>
+            <rect x="240" y="208" width="160" height="24" rx="2" class="box-accent"/>
+            <text class="label-mono-sm label-accent" x="252" y="224">AgentPin &middot; verify</text>
+          </g>
+
+          <g data-step="step-journal" tabindex="0" role="button" style="cursor:pointer">
+            <line x1="320" y1="170" x2="320" y2="255" class="arrow" stroke-dasharray="3 3"/>
+            <rect x="265" y="248" width="110" height="10" fill="transparent"/>
+            <text x="320" y="256" text-anchor="middle" class="label-mono-sm" style="fill:#a08030">&rarr; journal (L5)</text>
+          </g>
+        </svg>
+
+        <div class="fig0-detail fig3-detail" style="margin-top: 1.25rem"></div>
+
+        <figcaption class="diagram-caption">
+          <strong>Bidirectional trust.</strong> The agent verifies tool integrity (SchemaPin), the tool verifies agent identity (AgentPin), and the policy engine evaluates authorization. All three steps are recorded in the cryptographic audit journal. Hover or click any arrow for details.
+        </figcaption>
+      </figure>
     </section>
 
     <!-- 7. Policy Enforcement -->
@@ -1380,6 +1585,82 @@ AgentLoop&lt;Observing&gt;    -- observe()       --&gt;  AgentLoop&lt;Reasoning&
       <h3>8.5 Step-Up Authorization and Deferral</h3>
       <p><strong>Step-up authorization:</strong> execution <span class="req-tag req-must">MUST</span> block until approval; full context <span class="req-tag req-must">MUST</span> be available to approvers; configurable timeouts <span class="req-tag req-must">MUST</span> be enforced (deny on timeout); decisions <span class="req-tag req-must">MUST</span> be recorded in the journal.</p>
       <p><strong>Deferral:</strong> deferred actions <span class="req-tag req-must">MUST</span> remain paused without effects; the runtime <span class="req-tag req-must">MUST</span> track deferred actions and maintain execution order; cascading deferrals <span class="req-tag req-must">MUST</span> be bounded (deny when limit exceeded); deny on timeout <span class="req-tag req-must">MUST</span> be the default; both deferral and resolution <span class="req-tag req-must">MUST</span> be recorded.</p>
+
+      <figure class="diagram" id="fig-4" data-diagram="fig4">
+        <span class="diagram-eyebrow">Figure 4 &middot; Action classification pipeline</span>
+
+        <div class="diagram-controls" style="border-top:none; padding-top:0; margin-top:0">
+          <span class="label">Trace an action</span>
+          <div class="fig4-scenarios" style="display:flex; gap:.4rem; flex-wrap:wrap; flex:1 1 auto"></div>
+        </div>
+
+        <svg class="dg-svg fig4-svg" viewBox="0 0 820 260" role="img" aria-label="Action classification pipeline" style="margin-top: 1rem">
+          <defs>
+            <marker id="arrF4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="#3a3a48"/>
+            </marker>
+            <marker id="arrF4A" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="#c8a44e"/>
+            </marker>
+          </defs>
+
+          <g data-node="node-contract" transform="translate(20,90)">
+            <rect class="box" width="160" height="70" rx="3"/>
+            <text class="label-mono-sm" x="12" y="20">L2 &middot; CONTRACT</text>
+            <text class="label-major" x="12" y="43">Type check</text>
+            <text class="label-mono-sm" x="12" y="60" style="fill:#6b6860">typed &middot; sanitized</text>
+          </g>
+          <g data-node="node-static" transform="translate(230,90)">
+            <rect class="box" width="160" height="70" rx="3"/>
+            <text class="label-mono-sm" x="12" y="20">L4 &middot; STATIC</text>
+            <text class="label-major" x="12" y="43">Policy rules</text>
+            <text class="label-mono-sm" x="12" y="60" style="fill:#6b6860">RBAC &middot; ABAC</text>
+          </g>
+          <g data-node="node-context" transform="translate(440,90)">
+            <rect class="box" width="160" height="70" rx="3"/>
+            <text class="label-mono-sm" x="12" y="20">L4 &middot; CONTEXT</text>
+            <text class="label-major" x="12" y="43">Context eval</text>
+            <text class="label-mono-sm" x="12" y="60" style="fill:#6b6860">history &middot; drift</text>
+          </g>
+
+          <path data-arrow="node-contract-node-static" class="arrow" d="M180 125 L228 125" marker-end="url(#arrF4)"/>
+          <path data-arrow="node-static-node-context" class="arrow" d="M390 125 L438 125" marker-end="url(#arrF4)"/>
+
+          <g data-out="out-allow" transform="translate(660,30)">
+            <rect class="box" width="130" height="30" rx="2"/>
+            <text class="label-mono" x="10" y="19" style="fill:#5a9a6a">ALLOW</text>
+          </g>
+          <g data-out="out-stepup" transform="translate(660,70)">
+            <rect class="box" width="130" height="30" rx="2"/>
+            <text class="label-mono" x="10" y="19" style="fill:#5080b0">STEP-UP</text>
+          </g>
+          <g data-out="out-defer" transform="translate(660,110)">
+            <rect class="box" width="130" height="30" rx="2"/>
+            <text class="label-mono" x="10" y="19" style="fill:#c8a44e">DEFER</text>
+          </g>
+          <g data-out="out-deny" transform="translate(660,150)">
+            <rect class="box" width="130" height="30" rx="2"/>
+            <text class="label-mono" x="10" y="19" style="fill:#c45050">DENY</text>
+          </g>
+          <g data-out="out-rejected" transform="translate(20,190)">
+            <rect class="box" width="200" height="30" rx="2"/>
+            <text class="label-mono" x="10" y="19" style="fill:#c8a44e">REJECTED &middot; inexpressible</text>
+          </g>
+
+          <path data-arrow="node-context-out-allow"   class="arrow" d="M600 110 L660 45"  marker-end="url(#arrF4)"/>
+          <path data-arrow="node-context-out-stepup"  class="arrow" d="M600 118 L660 85"  marker-end="url(#arrF4)"/>
+          <path data-arrow="node-context-out-defer"   class="arrow" d="M600 128 L660 125" marker-end="url(#arrF4)"/>
+          <path data-arrow="node-context-out-deny"    class="arrow" d="M600 140 L660 165" marker-end="url(#arrF4)"/>
+          <path data-arrow="node-static-out-deny"     class="arrow" d="M348 160 Q500 210 660 170" marker-end="url(#arrF4)"/>
+          <path data-arrow="node-contract-out-rejected" class="arrow" d="M100 160 L100 185" marker-end="url(#arrF4)"/>
+        </svg>
+
+        <div class="fig0-detail fig4-detail" style="margin-top: 1rem"></div>
+
+        <figcaption class="diagram-caption">
+          <strong>Action classification pipeline.</strong> Tool contract validation eliminates structurally forbidden actions before the policy engine is reached. Static policy handles policy-forbidden cases; context-dependent evaluation handles the remaining categories using accumulated session context.
+        </figcaption>
+      </figure>
     </section>
 
     <!-- 8. Audit Layer -->
@@ -1453,6 +1734,26 @@ AgentLoop&lt;Observing&gt;    -- observe()       --&gt;  AgentLoop&lt;Reasoning&
 
       <h3>9.5 Compliance Properties</h3>
       <p>The journal provides infrastructure that can contribute to regulatory compliance, though OATS alone is not sufficient for any regulatory framework. Specifically: the journal can serve as a component of <strong>HIPAA</strong> audit trails (recording health data access with identity and authorization); <strong>SOC2</strong> evidence collection (recording policy enforcement decisions); <strong>SOX</strong> audit trail requirements (recording attributable financial system actions); and <strong>GDPR</strong> accountability mechanisms (recording data access patterns). In each case, the journal addresses the technical recording requirement but does not address the organizational, procedural, or legal requirements of the applicable regulation.</p>
+
+      <figure class="diagram" id="fig-5" data-diagram="fig5">
+        <span class="diagram-eyebrow">Figure 5 &middot; Hash-chained audit journal</span>
+
+        <div class="fig5-entries"></div>
+
+        <div class="diagram-controls">
+          <span class="label">Integrity</span>
+          <button class="dg-btn fig5-verify">Verify chain</button>
+          <button class="dg-btn fig5-reset">Reset</button>
+          <span style="flex:1"></span>
+          <span class="label" style="font-style:italic">Click any entry to tamper</span>
+        </div>
+
+        <div class="fig5-status ok" style="margin-top: 1rem"></div>
+
+        <figcaption class="diagram-caption">
+          <strong>Hash-chained audit journal.</strong> Each entry includes the cryptographic hash of the previous entry and an Ed25519 signature, forming a tamper-evident chain verifiable offline. Tampering with any entry breaks the chain at that link and every link after it.
+        </figcaption>
+      </figure>
     </section>
 
     <!-- 9. Sandboxing -->
@@ -1883,5 +2184,6 @@ AgentLoop&lt;Observing&gt;    -- observe()       --&gt;  AgentLoop&lt;Reasoning&
   });
 </script>
 
+<script src="diagrams.js"></script>
 </body>
 </html>

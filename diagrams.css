@@ -1,0 +1,408 @@
+/* ======================================================================
+   OATS diagrams — shared styles for Figures 0–5.
+   Monochrome + single gold accent. Thin borders. Mono labels.
+   Matches the canonical OATS landing page.
+   ====================================================================== */
+
+.diagram {
+  --dg-border: #2a2a35;
+  --dg-border-strong: #3a3a48;
+  --dg-accent: #c8a44e;
+  --dg-accent-dim: #a08030;
+  --dg-accent-glow: rgba(200, 164, 78, 0.12);
+  --dg-accent-glow-strong: rgba(200, 164, 78, 0.25);
+  --dg-red: #c45050;
+  --dg-green: #5a9a6a;
+  --dg-blue: #5080b0;
+  --dg-text: #e8e6e1;
+  --dg-text-2: #9a9790;
+  --dg-text-3: #6b6860;
+  --dg-bg: #131318;
+  --dg-bg-2: #1a1a22;
+
+  position: relative;
+  background: var(--dg-bg);
+  border: 1px solid var(--dg-border);
+  border-radius: 4px;
+  padding: 0.7rem 1.75rem 1.25rem;
+  margin: 2rem 0;
+  overflow: hidden;
+}
+
+.diagram-eyebrow {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.58rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--dg-accent-dim);
+  margin-bottom: 1.3rem;
+}
+
+.diagram-caption {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #1e1e28;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  line-height: 1.6;
+  letter-spacing: 0.02em;
+  color: var(--dg-text-3);
+}
+.diagram-caption strong {
+  color: var(--dg-text-2);
+  font-weight: 600;
+}
+
+.diagram-controls {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px dashed #1e1e28;
+}
+.diagram-controls .label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--dg-text-3);
+  margin-right: 0.5rem;
+  white-space: nowrap;
+}
+.dg-btn {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.35rem 0.7rem;
+  background: transparent;
+  color: var(--dg-text-2);
+  border: 1px solid var(--dg-border);
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+.dg-btn:hover {
+  color: var(--dg-accent);
+  border-color: var(--dg-accent-dim);
+  background: var(--dg-accent-glow);
+}
+.dg-btn.active {
+  color: var(--dg-accent);
+  border-color: var(--dg-accent);
+  background: var(--dg-accent-glow);
+}
+.dg-btn.danger.active {
+  color: var(--dg-red);
+  border-color: var(--dg-red);
+  background: rgba(196, 80, 80, 0.08);
+}
+
+/* ===== shared primitives ===== */
+.dg-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.dg-svg text {
+  font-family: 'JetBrains Mono', monospace;
+  fill: var(--dg-text-2);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+.dg-svg .label-major {
+  font-family: 'DM Serif Display', Georgia, serif;
+  fill: var(--dg-text);
+  font-size: 14px;
+  letter-spacing: 0;
+}
+.dg-svg .label-mono-sm { font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase; fill: var(--dg-text-3); }
+.dg-svg .label-mono    { font-size: 10.5px; letter-spacing: 0.06em; fill: var(--dg-text-2); }
+.dg-svg .label-accent  { fill: var(--dg-accent); }
+.dg-svg .box {
+  fill: var(--dg-bg-2);
+  stroke: var(--dg-border-strong);
+  stroke-width: 1;
+}
+.dg-svg .box-accent {
+  fill: var(--dg-accent-glow);
+  stroke: var(--dg-accent);
+  stroke-width: 1;
+}
+.dg-svg .box-accent-strong {
+  fill: var(--dg-accent-glow-strong);
+  stroke: var(--dg-accent);
+  stroke-width: 1.5;
+}
+.dg-svg .arrow {
+  fill: none;
+  stroke: var(--dg-border-strong);
+  stroke-width: 1.2;
+}
+.dg-svg .arrow-accent {
+  stroke: var(--dg-accent);
+  stroke-width: 1.5;
+}
+.dg-svg .arrow-deny {
+  stroke: var(--dg-red);
+  stroke-width: 1.2;
+  stroke-dasharray: 3 3;
+}
+.dg-svg .active-box {
+  fill: var(--dg-accent-glow-strong);
+  stroke: var(--dg-accent);
+  stroke-width: 1.8;
+}
+.dg-svg .active-box + text,
+.dg-svg g.active text {
+  fill: var(--dg-text);
+}
+
+/* ============================================================
+   FIGURE 0 — trust stack
+   ============================================================ */
+.fig0-layer {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--dg-border);
+  background: var(--dg-bg-2);
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 0.5rem;
+  position: relative;
+}
+.fig0-layer:hover, .fig0-layer.active {
+  border-color: var(--dg-accent);
+  background: var(--dg-accent-glow);
+}
+.fig0-layer .num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  color: var(--dg-accent-dim);
+  min-width: 36px;
+}
+.fig0-layer.active .num { color: var(--dg-accent); }
+.fig0-layer .name {
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: 1.05rem;
+  color: var(--dg-text);
+  flex: 1;
+}
+.fig0-layer .q {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.62rem;
+  color: var(--dg-text-3);
+  letter-spacing: 0.03em;
+  font-style: italic;
+  text-align: right;
+  max-width: 50%;
+}
+.fig0-detail {
+  margin-top: 1rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--dg-border);
+  border-left: 3px solid var(--dg-accent);
+  border-radius: 0 4px 4px 0;
+  background: var(--dg-bg-2);
+  font-family: 'Source Serif 4', Georgia, serif;
+  font-size: 0.92rem;
+  line-height: 1.6;
+  color: var(--dg-text-2);
+  min-height: 5.5rem;
+}
+.fig0-detail .t {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--dg-accent);
+  margin-bottom: 0.4rem;
+}
+
+/* ============================================================
+   FIGURE 1 — ORGA loop
+   ============================================================ */
+.fig1-stage { position: relative; }
+.fig1-legend {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.75rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.62rem;
+  color: var(--dg-text-3);
+  letter-spacing: 0.05em;
+}
+.fig1-legend .swatch {
+  display: inline-block;
+  width: 16px;
+  height: 2px;
+  vertical-align: middle;
+  margin-right: 0.4rem;
+}
+.sw-arrow { background: var(--dg-accent); }
+.sw-deny {
+  background-image: linear-gradient(to right, var(--dg-red) 0, var(--dg-red) 3px, transparent 3px, transparent 6px);
+  background-size: 6px 2px;
+  height: 2px;
+}
+
+/* ============================================================
+   FIGURE 2 — deny vs allow
+   ============================================================ */
+.fig2-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+.fig2-col {
+  border: 1px solid var(--dg-border);
+  border-radius: 4px;
+  padding: 1rem 1rem 0.8rem;
+  background: var(--dg-bg-2);
+}
+.fig2-col h5 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin: 0 0 0.8rem;
+}
+.fig2-col.deny h5 { color: var(--dg-red); }
+.fig2-col.allow h5 { color: var(--dg-green); }
+.fig2-col .outcome {
+  margin-top: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px dashed var(--dg-border-strong);
+  border-radius: 3px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  line-height: 1.6;
+  color: var(--dg-text-2);
+  min-height: 3.4rem;
+}
+.fig2-col .outcome.pass { border-color: var(--dg-green); color: var(--dg-green); background: rgba(90, 154, 106, 0.08); }
+.fig2-col .outcome.block { border-color: var(--dg-red); color: var(--dg-red); background: rgba(196, 80, 80, 0.08); }
+.fig2-col .outcome.reject { border-color: var(--dg-accent-dim); color: var(--dg-accent); background: var(--dg-accent-glow); }
+
+.fig2-input {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 0.6rem;
+  flex-wrap: wrap;
+}
+.fig2-input code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  padding: 0.3rem 0.5rem;
+  background: var(--dg-bg);
+  border: 1px solid var(--dg-border);
+  color: var(--dg-text);
+  border-radius: 2px;
+  word-break: break-all;
+}
+
+/* ============================================================
+   FIGURE 4 — action classification pipeline
+   ============================================================ */
+.fig4-legend-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 0.4rem;
+  vertical-align: middle;
+}
+
+/* ============================================================
+   FIGURE 5 — hash-chained journal
+   ============================================================ */
+.fig5-entries {
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+  padding: 0.25rem 0 0.75rem;
+  align-items: stretch;
+}
+.fig5-entry {
+  flex: 0 0 180px;
+  position: relative;
+  border: 1px solid var(--dg-border-strong);
+  background: var(--dg-bg-2);
+  border-radius: 3px;
+  padding: 0.7rem 0.75rem 0.75rem;
+  margin-right: 18px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+.fig5-entry:last-child { margin-right: 0; }
+.fig5-entry::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: -19px;
+  width: 18px;
+  height: 1px;
+  background: var(--dg-accent);
+  transform: translateY(-50%);
+}
+.fig5-entry:last-child::after { display: none; }
+.fig5-entry .seq {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.56rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--dg-accent-dim);
+  margin-bottom: 0.3rem;
+}
+.fig5-entry .type {
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: 0.92rem;
+  color: var(--dg-text);
+  margin-bottom: 0.5rem;
+  line-height: 1.15;
+}
+.fig5-entry .field {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.58rem;
+  line-height: 1.55;
+  color: var(--dg-text-3);
+  word-break: break-all;
+}
+.fig5-entry .field .k { color: var(--dg-accent-dim); letter-spacing: 0.05em; }
+.fig5-entry .field .hash { color: var(--dg-text-2); }
+.fig5-entry.tampered {
+  border-color: var(--dg-red);
+  background: rgba(196, 80, 80, 0.08);
+}
+.fig5-entry.tampered .type { color: var(--dg-red); }
+.fig5-entry.broken-chain::after { background: var(--dg-red); }
+.fig5-entry.broken-chain { outline: 1px dashed var(--dg-red); outline-offset: 3px; }
+.fig5-entry.hover-highlight {
+  border-color: var(--dg-accent);
+  background: var(--dg-accent-glow);
+}
+
+.fig5-status {
+  margin-top: 0.5rem;
+  padding: 0.7rem 1rem;
+  border-radius: 3px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  line-height: 1.6;
+}
+.fig5-status.ok     { color: var(--dg-green); border: 1px solid var(--dg-green); background: rgba(90, 154, 106, 0.06); }
+.fig5-status.broken { color: var(--dg-red);   border: 1px solid var(--dg-red);   background: rgba(196, 80, 80, 0.08); }
