@@ -2,25 +2,19 @@
 
 ## A System Specification for Zero-Trust AI Agent Execution
 
-**Version:** 1.0.0  
+**Version:** 1.1.0  
 **Status:** Release  
 **Authors:** Jascha Wanger / ThirdKey AI  
-**Date:** 2026-04-08  
+**Date:** April 2026  
 **License:** Apache 2.0  
 
-**PDF:** [OATS-v1.0.0.pdf](./OATS-v1.0.0.pdf)  
+**PDF:** [OATS-v1.1.0.pdf](./OATS-v1.1.0.pdf)  
 
 ---
 
 ## Abstract
 
-As AI systems evolve from assistants into autonomous agents executing consequential actions, the security boundary shifts from model outputs to tool execution. Traditional security paradigms -- log aggregation, perimeter defense, post-hoc forensics, and even runtime interception of fully-formed actions -- cannot adequately protect systems where AI-driven actions are irreversible, execute at machine speed, and originate from potentially compromised orchestration layers. The fundamental problem is architectural: when the policy gate can be influenced by the LLM it governs, when enforcement correctness is verified only at runtime, and when identity is self-asserted rather than cryptographically verified, security guarantees degrade under adversarial pressure.
-
-This paper introduces the Open Agent Trust Stack (OATS), an open specification for zero-trust AI agent execution built on three architectural convictions. First, allow-list enforcement: rather than intercepting arbitrary actions and deciding which to block (a deny-list that is incomplete by definition), OATS constrains what actions can be expressed through declarative tool contracts, making dangerous actions structurally inexpressible. Second, compile-time enforcement: the Observe-Reason-Gate-Act (ORGA) reasoning loop uses typestate programming so that skipping the policy gate is a type error, not a runtime bug. Third, structural independence: the Gate phase operates outside LLM influence by construction, not by trust assumption.
-
-OATS specifies five layers: (1) the ORGA reasoning loop with compile-time phase enforcement, (2) declarative tool contracts with typed parameter validation, (3) a cryptographic identity stack providing bidirectional trust between agents and tools, (4) a formally verifiable policy engine operating on structured inputs, and (5) hash-chained cryptographic audit journals with Ed25519 signatures for tamper-evident forensic reconstruction.
-
-OATS is model-agnostic, framework-agnostic, and vendor-neutral. It defines what a compliant agent runtime must enforce, not how it must be implemented. The architecture specified here has been validated through approximately eight months of autonomous operation in a production runtime, moving beyond theoretical frameworks to specify requirements derived from operational experience.
+As AI systems evolve from assistants into autonomous agents executing consequential actions, the security boundary shifts from model outputs to tool execution. Traditional security paradigms -- log aggregation, perimeter defense, post-hoc forensics, and runtime interception of fully-formed actions -- cannot adequately protect systems where AI-driven actions are irreversible, execute at machine speed, and originate from potentially compromised orchestration layers. This paper introduces the Open Agent Trust Stack (OATS), an open specification for zero-trust AI agent execution. OATS is built on three architectural convictions. First, allow-list enforcement: rather than intercepting arbitrary actions and deciding which to block, OATS constrains what actions can be expressed through declarative tool contracts, making dangerous actions structurally inexpressible. Second, compile-time enforcement: the Observe-Reason-Gate-Act (ORGA) reasoning loop uses typestate programming so that skipping the policy gate is a type error, not a runtime bug. Third, structural independence: the Gate phase is architecturally isolated from LLM influence. OATS specifies five layers: (1) the ORGA reasoning loop with compile-time phase enforcement, (2) declarative tool contracts with typed parameter validation, (3) a cryptographic identity stack providing bidirectional trust between agents and tools, (4) a formally verifiable policy engine operating on structured inputs, and (5) hash-chained cryptographic audit journals with Ed25519 signatures for tamper-evident forensic reconstruction. OATS is model-agnostic, framework-agnostic, and vendor-neutral. The architecture is informed by operational experience with a production runtime (Symbiont) that has operated autonomously for approximately eight months; however, rigorous empirical evaluation remains ongoing and this version of the specification should be read as an architectural contribution with an accompanying evaluation framework rather than a fully validated system.
 
 **Specification available at:** thirdkey.ai/oats
 
@@ -41,88 +35,103 @@ OATS is model-agnostic, framework-agnostic, and vendor-neutral. It defines what 
 11. [Inter-Agent Communication](#11-inter-agent-communication)
 12. [Conformance Requirements](#12-conformance-requirements)
 13. [Implementation Architectures](#13-implementation-architectures)
-14. [Research Directions](#14-research-directions)
-15. [Conclusion](#15-conclusion)
+14. [Evaluation Framework](#14-evaluation-framework)
+15. [Limitations](#15-limitations)
+16. [Research Directions](#16-research-directions)
+17. [Conclusion](#17-conclusion)
 
 ---
 
 ## 1. Introduction
 
-### 1.1 The Problem
+### 1.1 The Runtime Security Gap
 
-AI agents now execute consequential actions across enterprise systems: querying databases, sending communications, modifying files, invoking cloud services, and managing credentials. These actions are irreversible, execute at machine speed, originate from potentially compromised orchestration layers, and compose into violation patterns invisible when evaluated in isolation.
+AI agents now execute consequential actions across enterprise systems: querying databases, sending communications, modifying files, invoking cloud services, and managing credentials. Through function calling, plugins, external APIs, and protocol-based tool servers such as the Model Context Protocol (MCP), these agents perform multi-step tasks without human intervention.
 
-The security community has correctly identified the action layer as the stable enforcement boundary. Regardless of how agent frameworks, model architectures, or orchestration patterns evolve, actions on tools and APIs remain the point where AI decisions materialize as real-world effects. Security must be enforced at this boundary.
+These actions exhibit five characteristics that existing security paradigms cannot adequately address:
 
-However, identifying the right boundary is necessary but not sufficient. The critical question is *how* enforcement occurs at that boundary, and current approaches have structural weaknesses that undermine their guarantees.
+1. **Irreversibility.** Tool executions produce immediate and often permanent effects: database mutations, financial transactions, credential changes, or data exfiltration. Once executed, the damage is done.
+2. **Speed.** Agents execute hundreds of tool calls per minute, far exceeding human capacity for real-time review. Multi-step attack chains complete within seconds.
+3. **Compositional risk.** Individual actions may each satisfy policy while their composition constitutes a violation. Reading a confidential file is permitted; sending email is permitted; doing both in sequence may constitute exfiltration.
+4. **Untrusted orchestration.** Prompt injection and indirect instruction attacks mean the model's apparent intent cannot be trusted. Adversarial prompts can be embedded in documents, emails, and images that agents process.
+5. **Privilege amplification.** Agents routinely operate under static, high-privilege identities misaligned with the principle of least privilege.
 
-### 1.2 The Allow-List Thesis
+The gap in the current security landscape lies at the intersection of prevention and context-awareness: no existing system can block actions before execution based on both static policy and accumulated session context while simultaneously constraining what actions can be expressed in the first place. This is the gap that OATS addresses.
 
-Existing runtime security approaches operate on a deny-list model: the agent formulates an action, the security system intercepts it, evaluates it against policy and context, and decides whether to allow or block it. This model has a fundamental problem: it requires enumerating dangerous behavior. Every deny-list is incomplete by definition. Novel attacks, unanticipated compositions, and edge cases slip through because the system only blocks what it has been told to block.
+This paper makes two contributions: a normative system specification defining the runtime enforcement boundary for autonomous agent execution, and an implementation-grounded evaluation methodology derived from operational experience with a production runtime. The specification is the primary artifact; the evaluation framework (Section 14) is included to make the claims falsifiable and to enable comparable evaluation of future implementations. The contribution is a new runtime security abstraction with testable conformance properties, not a benchmark of one particular system.
 
-OATS inverts this model. Instead of intercepting arbitrary actions and deciding which to block, an OATS-compliant runtime constrains what actions can be expressed in the first place. The agent fills typed parameters defined by a declarative tool contract. The runtime validates those parameters against the contract, constructs the invocation from a template, and executes it. The agent never generates raw commands, never constructs API calls directly, never formulates unconstrained actions. Dangerous actions cannot be expressed because the interface does not permit them.
+### 1.2 Design Principles
 
-This is the allow-list thesis: define what is permitted and make everything else structurally inexpressible, rather than trying to enumerate and block what is dangerous.
+OATS is built on three architectural convictions, each addressing a structural weakness in current approaches.
 
-### 1.3 Structural Enforcement
+**Allow-list over deny-list.** Current runtime security approaches operate on a deny-list model: the agent formulates an action, a security system intercepts it, evaluates it, and decides whether to allow or block. This requires enumerating dangerous behavior -- an enumeration that is incomplete by definition. OATS inverts this model. The agent fills typed parameters defined by a declarative tool contract. The runtime validates parameters against the contract, constructs the invocation from a template, and executes. The agent never generates raw commands or constructs unconstrained API calls. Within the scope of contracted tools, dangerous actions cannot be expressed because the interface does not permit them. Actions that bypass the contract layer entirely (e.g., direct network calls from compromised agent code) require complementary controls such as sandboxing (Section 10).
 
-A second structural weakness in existing approaches is that enforcement correctness is verified only at runtime. The policy gate is a software component that can be misconfigured, bypassed through bugs, or circumvented through unanticipated code paths. If the gate fails to execute, actions proceed unguarded.
+**Compile-time over runtime enforcement.** When enforcement correctness is verified only at runtime, a code change that introduces a path bypassing the policy engine goes undetected until that path is exercised. OATS addresses this through the Observe-Reason-Gate-Act (ORGA) cycle, which uses type-level programming (typestates) so that skipping the Gate phase, dispatching tools without reasoning first, or observing results without dispatching are compile-time errors. In a correctly implemented typestate, the type system enforces that every action passes through policy evaluation. This property holds for code paths within the typestate-governed loop; it does not extend to code that circumvents the loop entirely, which is why sandboxing and network isolation provide complementary enforcement.
 
-OATS addresses this through compile-time enforcement of the reasoning loop. The Observe-Reason-Gate-Act (ORGA) cycle uses type-level programming (typestates) so that skipping the Gate phase, dispatching tools without reasoning first, or observing results without dispatching are compile-time errors, not runtime bugs. The type system guarantees that every action passes through policy evaluation. This guarantee holds regardless of code changes, refactoring, or integration complexity.
+**Structural independence over trust assumptions.** When the policy engine shares context, memory, and execution environment with the orchestration layer it governs, an LLM compromised through prompt injection can potentially influence the evaluation of its own actions. In OATS, the Gate phase receives a structured action proposal and evaluates it against policy using a formally verifiable policy engine. The LLM cannot modify, bypass, or influence the Gate's evaluation.
 
-### 1.4 Gate Independence
-
-The third structural weakness is that existing approaches evaluate actions within systems that process untrusted LLM outputs. The policy engine shares context, memory, and execution environment with the orchestration layer it is supposed to govern. An LLM that has been compromised through prompt injection can potentially influence the evaluation of its own actions.
-
-In OATS, the Gate phase operates outside LLM influence. The Gate receives a structured action proposal and evaluates it against policy using a formally verifiable policy engine. The LLM cannot modify, bypass, or influence the Gate's evaluation. Policy denial is fed back to the LLM as an observation, allowing it to adjust its approach, but the denial itself is not negotiable.
-
-### 1.5 Contributions
+### 1.3 Contributions
 
 This specification makes five contributions:
 
-1. **Typestate-enforced reasoning loop.** We specify the ORGA (Observe-Reason-Gate-Act) cycle with compile-time phase enforcement, ensuring that policy evaluation cannot be skipped, circumvented, or reordered.
+1. **Typestate-enforced reasoning loop.** We specify the ORGA cycle with compile-time phase enforcement, designed to prevent policy evaluation from being skipped, circumvented, or reordered within the loop (Section 5).
 
-2. **Allow-list tool contracts.** We specify a declarative tool contract format that constrains agent-tool interaction to typed, validated parameters, making dangerous actions structurally inexpressible.
+2. **Allow-list tool contracts.** We specify a declarative tool contract format that constrains agent-tool interaction to typed, validated parameters, making dangerous actions structurally inexpressible (Section 6).
 
-3. **Layered cryptographic identity.** We specify a bidirectional identity stack: tool integrity verification (ensuring tools have not been tampered with) and agent identity verification (ensuring agents are who they claim to be), providing mutual authentication between agents and tools.
+3. **Layered cryptographic identity.** We specify a bidirectional identity stack providing mutual authentication between agents and tools via domain-anchored cryptographic verification (Section 7).
 
-4. **Hash-chained audit journals.** We specify cryptographically signed, hash-chained event journals that provide tamper-evident forensic reconstruction with offline verification.
+4. **Hash-chained audit journals.** We specify cryptographically signed, hash-chained event journals for tamper-evident forensic reconstruction (Section 9).
 
-5. **Conformance requirements.** We define minimum requirements for OATS-compliant systems, enabling objective evaluation of implementations and preventing category dilution.
+5. **Conformance requirements.** We define minimum requirements for OATS-compliant systems, enabling objective evaluation of implementations (Section 12).
+
+OATS's novelty is not any single component in isolation -- typestates, policy engines, cryptographic signatures, audit logs, and sandboxing each have extensive prior art. The contribution is the integration of five layers into a unified runtime security model centered on consequential action execution, with three properties not found in prior work in combination: (a) expressibility constraints that eliminate action categories before policy evaluation, (b) compile-time enforcement that the policy gate executes on every dispatch path within the loop, and (c) bidirectional cryptographic identity binding actions to verified agents and verified tools. The conformance requirements formalize these properties into testable criteria, enabling objective comparison across implementations.
+
+### 1.4 Document Structure
+
+Section 2 reviews related work. Section 3 formalizes the problem and defines the system model. Section 4 characterizes the threat landscape. Section 5 presents the ORGA loop architecture. Section 6 specifies the tool contract layer. Section 7 specifies the identity layer. Section 8 specifies the policy enforcement layer. Section 9 specifies the audit layer. Section 10 addresses sandboxing and isolation. Section 11 addresses inter-agent communication. Section 12 defines conformance requirements. Section 13 presents implementation architectures. Section 14 defines the evaluation framework for empirical validation. Section 15 identifies known limitations. Section 16 identifies open research directions. Section 17 concludes.
 
 ---
 
 ## 2. Related Work
 
-This section positions OATS relative to existing academic research, industry frameworks, and emerging specifications for AI agent security.
-
 ### 2.1 Agent Security Research
 
-The security risks of LLM-based agents have been catalogued by several surveys. Ruan et al. provide comprehensive threat taxonomies covering prompt injection, tool misuse, and data exfiltration in agentic systems. Wu et al. focus on security properties of AI agents, while Su et al. address autonomy-induced risks including memory poisoning and deferred decision hazards. Debenedetti et al. introduce AgentDojo for evaluating attacks and defenses against LLM agents, and Ye et al. propose ToolEmu for identifying risky agent failures. These works characterize the problem space and evaluate agent robustness but operate at the model or benchmark level, not at the runtime action boundary where OATS enforces policy. OATS builds on their threat models and contributes an enforcement architecture.
+The security risks of LLM-based agents have been catalogued by several surveys. Ruan et al. and Wu et al. provide comprehensive threat taxonomies covering prompt injection, tool misuse, and data exfiltration. Su et al. focus on autonomy-induced risks including memory poisoning and deferred decision hazards. Debenedetti et al. introduce AgentDojo for evaluating attacks and defenses against LLM agents, while Ye et al. propose ToolEmu for identifying risky agent failures. These works characterize the problem space but do not propose runtime enforcement architectures. OATS builds on their threat models and contributes a system specification for constraining and evaluating actions before execution.
 
 Gaire et al. systematize security and safety risks in the Model Context Protocol ecosystem, providing a taxonomy of threats to MCP primitives. Their analysis of tool poisoning and indirect prompt injection directly informs OATS's threat model for tool supply chain attacks.
 
 ### 2.2 Runtime Security Specifications
 
-Errico (2026) introduces Autonomous Action Runtime Management (AARM), a system specification for securing AI-driven actions at runtime. AARM formalizes the runtime security gap, proposes an action classification framework (forbidden, context-dependent deny, context-dependent allow, context-dependent defer), and specifies conformance requirements for pre-execution interception, context accumulation, policy evaluation, and tamper-evident receipts. OATS shares AARM's identification of the action layer as the stable security boundary and incorporates its context-dependent action classification. OATS extends this foundation with compile-time enforcement of the reasoning loop, allow-list tool contracts, concrete cryptographic identity protocols, and multi-tier execution isolation.
+Errico introduces Autonomous Action Runtime Management (AARM), a system specification for securing AI-driven actions at runtime. AARM formalizes the runtime security gap, proposes an action classification framework distinguishing forbidden, context-dependent deny, context-dependent allow, and context-dependent defer actions, and specifies conformance requirements for pre-execution interception, context accumulation, policy evaluation, and tamper-evident receipts. OATS shares AARM's identification of the action layer as the stable security boundary and incorporates its context-dependent action classification. OATS extends this foundation with compile-time enforcement of the reasoning loop, allow-list tool contracts, concrete cryptographic identity protocols, and multi-tier execution isolation.
 
 ### 2.3 Industry Frameworks
 
-Google's Cloud CISO perspective advocates defense-in-depth and runtime controls for agents, aligning with OATS's architectural principles. AWS's Agentic AI Security Scoping Matrix provides a risk assessment framework that complements OATS's runtime enforcement with deployment-time scoping. Microsoft's governance framework addresses organizational controls including identity management and approval workflows. Raza et al. present a TRiSM framework for agentic multi-agent systems, structured around governance, explainability, and privacy. These frameworks provide lifecycle governance perspectives; OATS focuses specifically on the runtime enforcement layer.
+Google's Cloud CISO perspective advocates defense-in-depth and runtime controls for agents. AWS's Agentic AI Security Scoping Matrix provides a risk assessment framework complementing runtime enforcement with deployment-time scoping. Microsoft's governance framework addresses organizational controls including identity management and approval workflows. Raza et al. present a TRiSM framework for agentic multi-agent systems. These frameworks provide lifecycle governance; OATS focuses specifically on the runtime enforcement layer.
 
-### 2.4 Policy Languages and Access Control
+### 2.4 Access Control and Policy Languages
 
-OATS's policy enforcement layer builds on established access control research. RBAC and ABAC evaluate permissions against static attributes but lack session-level context accumulation. Capability-based security constrains authority propagation but does not address the compositional risks of non-deterministic agents. Policy languages such as OPA and Cedar provide expressive evaluation engines suitable as backends for OATS's policy evaluation component. AWS's independent choice of Cedar for their AgentCore runtime validates the architectural thesis that formal policy languages belong at the agent execution boundary.
+OATS's policy enforcement layer builds on established access control research. RBAC and ABAC evaluate permissions against static attributes but lack session-level context accumulation. Capability-based security constrains authority propagation but does not address compositional risks of non-deterministic agents. Policy languages such as OPA and Cedar provide expressive evaluation engines suitable as backends for OATS's policy evaluation component. AWS's independent adoption of Cedar for AgentCore provides supporting evidence for the thesis that formal policy languages belong at the agent execution boundary.
 
 ### 2.5 Complementary Standards
 
-OATS is complementary to, not competitive with, several existing standards:
+OATS is complementary to several existing standards. The OWASP Top 10 for LLM Applications catalogs vulnerabilities; OATS provides runtime enforcement mitigating tool misuse, excessive agency, and insecure output handling. The NIST AI RMF provides a risk management framework; OATS provides technical enforcement implementing portions around governance, monitoring, and accountability. MCP defines agent-tool communication; OATS defines how to govern actions flowing through that (or any) tool invocation mechanism.
 
-**OWASP Top 10 for LLM Applications.** OWASP catalogs vulnerabilities. OATS provides runtime enforcement that mitigates several categories, particularly tool misuse, excessive agency, and insecure output handling.
+### 2.6 Comparative Positioning
 
-**NIST AI RMF.** NIST provides a risk management framework. OATS provides technical enforcement mechanisms that implement portions of the NIST framework, particularly around governance, monitoring, and accountability.
+The following table positions OATS relative to existing approaches across the security properties specified in this paper. "Partial" indicates the property is architecturally possible but not structurally enforced by the specification. AgentDojo and ToolEmu are evaluation frameworks rather than enforcement runtimes and are not included; they are complementary to OATS rather than alternatives.
 
-**Model Context Protocol (MCP).** MCP defines a protocol for agent-tool communication. OATS defines how to govern actions flowing through that protocol (or any other tool invocation mechanism). The two are complementary: MCP defines the transport, OATS defines the trust.
+| Property | Prompt guardrails | Deny-list filter | Sandbox-only | AARM | OATS |
+|----------|-------------------|------------------|--------------|------|------|
+| Constrains expressible actions | – | – | – | – | Yes |
+| Pre-execution policy gate | – | Yes | – | Yes | Yes |
+| Session context accumulation | – | – | – | Yes | Yes |
+| Cryptographic tool identity | – | – | – | – | Yes |
+| Cryptographic agent identity | – | – | – | – | Yes |
+| Tamper-evident audit journal | – | – | – | Yes | Yes |
+| Compile-time phase enforcement | – | – | – | – | Yes |
+| Gate independent of LLM | – | Partial | N/A | Partial | Yes |
+| Execution isolation | – | – | Yes | – | Yes |
+| Formal conformance criteria | – | – | – | Yes | Yes |
 
 ---
 
@@ -162,7 +171,7 @@ where `Π = {π_1, ..., π_m}` is the set of typed parameter definitions, `τ` i
 
 Each parameter definition `π_i = (name_i, type_i, V_i, req_i)` specifies the parameter name, its type from the type system `T`, validation constraints `V_i`, and whether it is required.
 
-The type system `T` provides at minimum:
+The type system `T` provides:
 
 ```
 T = {string, integer, boolean, enum, scope_target, url, path, ip_address, cidr, port}
@@ -218,7 +227,7 @@ An OATS-compliant runtime MUST ensure that for all actions `a`:
 
 1. **Structural constraint.** `a` is expressible only through a valid tool contract `κ`.
 2. **Pre-execution interception.** `a` is intercepted and evaluated before any effects occur.
-3. **Compile-time gate guarantee.** All code paths from action proposal to tool dispatch pass through the Gate phase; this is verified at compile time.
+3. **Compile-time gate enforcement.** All code paths from action proposal to tool dispatch within the ORGA loop pass through the Gate phase; in typestate implementations, this is enforced at compile time.
 4. **Policy compliance.** `a` satisfies organizational policy `Π` given context `C` and identity `I`.
 5. **Context-aware evaluation.** `a` is evaluated against both static policy and accumulated session context.
 6. **Identity verification.** Both the agent invoking a tool and the tool being invoked are cryptographically verified.
@@ -228,64 +237,40 @@ An OATS-compliant runtime MUST ensure that for all actions `a`:
 
 ## 4. Threat Model
 
-OATS operates on a fundamental assumption: **the AI orchestration layer `O` cannot be trusted as a security boundary.** The model processes untrusted inputs through opaque reasoning, producing actions that may serve attacker goals rather than user intent. This assumption is conservative but necessary given demonstrated attack success rates against state-of-the-art models.
+OATS operates on a fundamental assumption: **the AI orchestration layer `O` cannot be trusted as a security boundary.** The model processes untrusted inputs through opaque reasoning, producing actions that may serve attacker goals rather than user intent.
 
-### 4.1 Threats Addressed
+### 4.1 Threat Summary
 
-OATS addresses the following threat categories. For each, we describe the threat and the OATS-specific mitigation.
+The following table summarizes the primary threats, their attack vectors, and the OATS controls that mitigate them.
 
-**Prompt injection (direct and indirect).** Adversaries embed instructions in user input, documents, tool outputs, or multimedia that override the agent's intended behavior. OATS mitigates this at two layers. At the tool contract layer, injected instructions cannot produce arbitrary tool invocations because the contract does not expose parameters that accept raw commands; shell metacharacters are rejected by default on all string types. At the policy layer, actions are evaluated against accumulated session context regardless of how the agent was instructed, catching injection-triggered actions that violate intent alignment.
-
-**Confused deputy.** A privileged agent is tricked into misusing its authority through ambiguous or deceptive instructions. OATS mitigates this through bidirectional identity verification: before an agent invokes a tool, the tool's integrity is verified cryptographically (ensuring the tool contract has not been tampered with); before a tool accepts an invocation, the agent's identity is verified cryptographically (ensuring the agent is authorized to act). Destructive operations may be classified as forbidden or context-dependent, and step-up authorization breaks the autonomous execution chain.
-
-**Action composition / data exfiltration.** Individual actions may each satisfy policy while their composition constitutes a breach. OATS tracks data classification across actions within a session through context accumulation. When sensitive data is accessed, subsequent external communications are evaluated against this context. Tool contracts can additionally declare allowed destinations and data classification constraints, providing defense-in-depth before the action reaches the policy engine.
-
-**Intent drift.** The agent's actions gradually diverge from the user's original request through its own reasoning process, without adversarial manipulation. OATS tracks the chain of intent from original request through each action via context accumulation and semantic distance measurement. When cumulative drift exceeds configured thresholds, the Gate triggers deferral, step-up authorization, or denial.
-
-**Malicious tool outputs.** Compromised or adversarial tools return outputs designed to manipulate subsequent agent behavior. OATS tracks tool outputs as part of session state and restricts what actions are permissible after specific tool calls. The context-dependent deny classification blocks actions that appear legitimate in isolation but are inconsistent with the session's chain of intent.
-
-**Over-privileged credentials.** Agents are provisioned with credentials exceeding operational requirements. OATS supports least-privilege enforcement through just-in-time credential issuance and operation-specific token scoping, and detects scope expansion through context accumulation.
-
-**Goal hijacking and memory poisoning.** Adversaries alter the agent's objectives or corrupt persistent memory. OATS operates at the action level: regardless of what objective the agent believes it is pursuing, each action must satisfy policy and align with accumulated context. Audit journals with provenance information enable detection of behavioral drift across sessions.
+| Threat | Attack Vector | OATS Control |
+|--------|---------------|--------------|
+| Prompt injection | User input, documents, tool outputs, images | Tool contracts (structural), policy enforcement, context-dependent deny |
+| Malicious tool outputs | Adversarial tool responses | Post-tool action restrictions, context tracking, output schema validation |
+| Confused deputy | Ambiguous/malicious instructions | Bidirectional identity verification, step-up approval, intent alignment |
+| Over-privileged credentials | Excessive token scopes | Least-privilege enforcement, scoped credentials |
+| Data exfiltration | Action composition | Context accumulation, compositional policies, scope enforcement |
+| Goal hijacking | Injected objectives | Action-level policy, semantic distance tracking |
+| Intent drift | Agent reasoning divergence | Context accumulation, semantic distance threshold, deferral |
+| Memory poisoning | Persistent context manipulation | Provenance tracking, anomaly detection, journal comparison |
+| Tool supply chain | Tampered contracts, spoofed tools | Cryptographic tool integrity verification, TOFU pinning |
+| Cross-agent propagation | Multi-agent delegation | Cross-agent context, transitive trust limits, blast-radius containment |
 
 ### 4.2 Attack Lifecycle
 
-Attacks against AI agents typically follow a four-stage lifecycle: (1) **injection** — attacker embeds malicious instructions in content the agent processes; (2) **hijacking** — the agent interprets malicious content as legitimate instructions; (3) **execution** — the agent invokes tools with attacker-controlled parameters; (4) **impact** — actions produce irreversible effects. OATS intervenes at two points: between stages 2 and 3 (the Gate blocks actions that violate policy), and before stage 3 begins (tool contracts constrain what parameters the agent can express).
+Attacks against AI agents typically follow a four-stage lifecycle: (1) **injection** -- attacker embeds malicious instructions in content the agent processes; (2) **hijacking** -- the agent interprets malicious content as legitimate instructions; (3) **execution** -- the agent invokes tools with attacker-controlled parameters; (4) **impact** -- actions produce irreversible effects. OATS intervenes at two points: between stages 2 and 3 (the Gate blocks actions that violate policy), and before stage 3 begins (tool contracts constrain what parameters the agent can express).
 
 Intent drift follows a different lifecycle without explicit injection. The agent's reasoning gradually diverges through plausible-seeming steps. OATS detects this through context accumulation and semantic distance tracking regardless of cause.
 
-### 4.3 Tool Supply Chain Attacks
+### 4.3 Trust Assumptions
 
-OATS addresses a threat category critical to the emerging agent ecosystem: tool supply chain attacks. When agents use tools provided by third parties (MCP servers, API integrations, plugin ecosystems), those tools may be tampered with, impersonated, or silently modified after initial deployment. Tool contracts may be altered to widen parameter validation, change command templates, or modify output schemas.
+**Trusted:** The OATS runtime (ORGA loop, policy engine, tool contract executor, journal, identity verifier); cryptographic primitives and key management; the policy store and authoring process; the underlying infrastructure (OS, network, hardware); the compiler and type system.
 
-OATS mitigates tool supply chain attacks through cryptographic tool integrity verification. Tool contracts are signed by their publishers. The runtime verifies signatures before registering tools, rejecting any contract that fails verification. Signatures cover the entire behavioral contract (parameter definitions, validation rules, command templates, output schemas, scope constraints), so any tampering is detected.
+**Untrusted:** The AI model and its outputs; the orchestration layer; user inputs and prompts; tool outputs and retrieved data; external documents, emails, web content, and multi-modal inputs; agent memory and conversation history; tool contracts from unverified publishers.
 
-### 4.4 Trust Assumptions
+**Partially trusted:** Tool implementations (OATS constrains invocation but cannot prevent internal bugs); human approvers (OATS routes step-up authorization but cannot prevent social engineering); verified tool contracts (verified as untampered, but the tool may have vulnerabilities).
 
-OATS's security guarantees depend on explicit trust assumptions:
-
-**Trusted:**
-- The OATS runtime (ORGA loop, policy engine, tool contract executor, journal, identity verifier)
-- Cryptographic primitives and key management infrastructure
-- The policy store and policy authoring process
-- The underlying infrastructure (OS, network, hardware)
-- The compiler and type system (for compile-time enforcement guarantees)
-
-**Untrusted:**
-- The AI model and its outputs
-- The orchestration layer (agent framework, workflow logic)
-- User inputs and prompts
-- Tool outputs and retrieved data
-- External documents, emails, web content, and multi-modal inputs
-- Agent memory and conversation history
-- Tool contracts from unverified publishers (until signature verification succeeds)
-
-**Partially trusted:**
-- Tool implementations (OATS constrains invocation but cannot prevent bugs within tools)
-- Human approvers (OATS routes step-up authorization but cannot prevent social engineering)
-- Verified tool contracts (verified as untampered, but the tool itself may have vulnerabilities)
-
-### 4.5 Out of Scope
+### 4.4 Out of Scope
 
 OATS addresses runtime action security. The following threats require complementary controls: model training data poisoning or weight manipulation (pre-deployment ML security); denial of service against the OATS runtime (infrastructure availability); physical or infrastructure-level attacks (physical security); social engineering of human approvers (security awareness training); code-level vulnerabilities within tool implementations (application security testing); memory storage security (separate storage controls). OATS is one layer in a defense-in-depth strategy.
 
@@ -293,56 +278,65 @@ OATS addresses runtime action security. The following threats require complement
 
 ## 5. Core Architecture: The ORGA Loop
 
-The ORGA (Observe-Reason-Gate-Act) loop is the core execution engine for OATS-compliant agent runtimes. It drives a multi-turn cycle between an LLM, a policy gate, and external tools through four mandatory phases.
+The ORGA (Observe-Reason-Gate-Act) loop is the core execution engine for OATS-compliant runtimes. It drives a multi-turn cycle between an LLM, a policy gate, and external tools through four mandatory phases.
 
 ### 5.1 Phase Definitions
 
 **Observe.** Collect results from previous tool executions. Incorporate tool outputs, error messages, policy denial feedback, and environmental signals into the agent's context. This phase also integrates knowledge retrieval (RAG-enhanced context from vector-backed storage) when available.
 
-**Reason.** The LLM processes accumulated context and produces proposed actions (tool calls or text responses). The LLM sees tool definitions (derived from tool contracts) but never sees raw invocation details (command strings, API endpoints, connection parameters). The LLM's output is a structured proposal, not an executable action.
+**Reason.** The LLM processes accumulated context and produces proposed actions (tool calls or text responses). The LLM sees tool definitions derived from tool contracts but never sees raw invocation details. The LLM's output is a structured proposal, not an executable action.
 
-**Gate.** The policy engine evaluates each proposed action. This phase operates entirely outside LLM influence. The Gate receives the proposed action, the accumulated session context, and the agent's identity, and evaluates them against organizational policy. The Gate produces one of five decisions: Allow, Deny, Modify, Step-Up (pause for human approval), or Defer (temporarily suspend pending additional context). Denial reasons are recorded in the audit journal and fed back to the LLM as observations in the next Observe phase.
+**Gate.** The policy engine evaluates each proposed action. This phase operates entirely outside LLM influence. The Gate receives the proposed action, the accumulated session context, and the agent's identity, and evaluates them against organizational policy. The Gate produces one of five decisions: Allow, Deny, Modify, Step-Up, or Defer. Denial reasons are recorded in the audit journal and fed back to the LLM as observations in the next Observe phase.
 
 **Act.** Approved actions are dispatched to tool executors. The tool contract executor validates parameters against the contract's type system, constructs the invocation from the contract's template, executes with timeout enforcement, captures output in a structured evidence envelope, and records the execution in the audit journal.
 
 ### 5.2 Typestate Enforcement
 
-Phase transitions MUST be enforced at compile time using type-level programming (typestates). Each phase is a distinct type. The loop state machine can only call methods appropriate to its current phase. The transition from Reason to Act without passing through Gate MUST be a type error, not a runtime check.
-
-Concretely, in a Rust implementation:
+Phase transitions MUST be enforced at compile time. Each phase is a distinct type. The loop state machine can only call methods appropriate to its current phase:
 
 ```
-AgentLoop<Reasoning>  -- produce_output() -->  AgentLoop<PolicyCheck>
-AgentLoop<PolicyCheck> -- check_policy()  -->  AgentLoop<ToolDispatching>
-AgentLoop<ToolDispatching> -- dispatch()  -->  AgentLoop<Observing>
-AgentLoop<Observing>  -- observe()        -->  AgentLoop<Reasoning> | LoopResult
+AgentLoop<Reasoning>       -- produce_output() -->  AgentLoop<PolicyCheck>
+AgentLoop<PolicyCheck>     -- check_policy()   -->  AgentLoop<ToolDispatching>
+AgentLoop<ToolDispatching> -- dispatch()       -->  AgentLoop<Observing>
+AgentLoop<Observing>       -- observe()        -->  AgentLoop<Reasoning> | LoopResult
 ```
 
-The following are compile-time errors:
-- Skipping the policy check (Reasoning to ToolDispatching)
-- Dispatching tools without reasoning (PolicyCheck to Observing)
-- Observing results without dispatching (Reasoning to Observing)
+The following are compile-time errors, not runtime bugs:
+- Transitioning from Reasoning to ToolDispatching (skipping policy check)
+- Transitioning from PolicyCheck to Observing (dispatching without execution)
+- Transitioning from Reasoning to Observing (skipping both Gate and Act)
 
-Implementations in languages without native typestate support (Python, JavaScript, TypeScript) MUST provide equivalent guarantees through runtime enforcement with 100% path coverage testing and formal verification that all tool dispatch paths pass through the Gate. Implementations SHOULD document which guarantee mechanism is used and its limitations.
+Implementations in languages without native typestate support MUST provide equivalent enforcement through runtime checks with 100% path coverage testing and documented verification that all tool dispatch paths pass through the Gate. Such implementations SHOULD acknowledge that runtime enforcement provides weaker assurance than compile-time enforcement and document the residual risk.
 
-### 5.3 Dynamic Branching
+### 5.3 Dynamic Branching and Termination
 
-The only point where the ORGA loop branches dynamically is after the Observe phase: the loop either continues (returning to Reason for another iteration) or completes (producing a final result). This branching is a standard pattern match on a concrete type, not dynamic dispatch. All other phase transitions are strictly linear.
+The only dynamic branch in the ORGA loop is after Observe: the loop either continues (returning to Reason) or completes (producing a final result). This is a standard pattern match on a concrete type, not dynamic dispatch. All other transitions are strictly linear.
 
-### 5.4 Loop Termination
+The loop terminates when the LLM produces a final text response, iteration limits are reached, token or time budgets are exhausted, or a circuit breaker trips.
 
-The loop terminates when:
-- The LLM produces a final text response (no tool calls proposed)
-- Iteration limits are reached (configurable per deployment)
-- Token budget is exhausted
-- Time budget is exhausted
-- A circuit breaker trips (configurable failure thresholds on tool calls)
+### 5.4 Policy Denial Feedback
 
-On termination, the journal records the termination reason, total iterations, token usage, and wall-clock duration.
+When the Gate denies an action, the denial reason MUST be fed back to the LLM as an observation. This allows the LLM to adjust its approach. The Gate evaluates each subsequent proposal independently; denials are not negotiable.
 
-### 5.5 Policy Denial Feedback
+### 5.5 Scope of Assurance
 
-When the Gate denies an action, the denial reason MUST be fed back to the LLM as an observation in the next Observe phase. This allows the LLM to adjust its approach without compromising the denial. The LLM may propose alternative actions that satisfy policy, but the Gate evaluates each proposal independently. The denial is not negotiable; only the LLM's subsequent proposals can change.
+Typestate enforcement provides a specific, bounded property. To prevent overinterpretation, we state exactly what is and is not covered.
+
+**What typestate enforcement covers.** Within the ORGA loop, the type system enforces that every transition from action proposal to tool dispatch passes through the Gate phase. In a Rust implementation, this is a compile-time property: any code path that attempts `AgentLoop<Reasoning> → AgentLoop<ToolDispatching>` without consuming an intermediate `AgentLoop<PolicyCheck>` is rejected by the compiler.
+
+*Proof sketch.* Let `R, P, D, O` denote the Reasoning, PolicyCheck, ToolDispatching, and Observing phases. Each phase is a distinct zero-sized type. The only method consuming `R` produces `P`; the only method consuming `P` produces `D`; the only method consuming `D` produces `O`; and `O` produces either `R` (continue) or a terminal value (complete). Because each method takes self by value (consuming the prior state), no valid Rust program can hold two phase values simultaneously or skip a phase. The compiler's ownership and move semantics enforce this without runtime checks. This argument depends on the type signatures being correctly declared; it does not require trust in runtime behavior.
+
+**What typestate enforcement does not cover.** The property applies only to code paths mediated by the AgentLoop runner. It does not provide whole-program non-bypass assurance. Specifically: (a) agent code that invokes tools through a separate code path not mediated by the ORGA runner is unconstrained by the typestate; (b) plugins, FFI calls, or dynamically loaded code may bypass the loop; (c) network-level tool invocations from within the sandbox are not mediated by the type system. These residual risks are addressed by sandboxing (Section 10) and network isolation as defense-in-depth layers, not by the typestate itself. An OATS-compliant deployment SHOULD combine typestate enforcement with at least one complementary isolation mechanism.
+
+### 5.6 Gate Independence
+
+The Gate phase is designed to operate outside LLM influence. This section specifies what "outside LLM influence" means concretely and what an implementation must demonstrate.
+
+**Structural requirements.** The Gate MUST receive input as a typed, serialized data structure (e.g., a Rust struct, a JSON object conforming to a fixed schema) containing: tool name, operation, validated parameters, agent identity, and accumulated session context. The Gate MUST NOT receive natural language strings, LLM reasoning traces, or any content that requires language interpretation. The Gate MUST NOT share mutable memory, mutable references, or writable state with the LLM inference component. The Gate MUST NOT expose a callback, hook, or API that the LLM can invoke to modify Gate behavior during evaluation.
+
+**Implementation patterns.** Conformant implementations may achieve Gate independence through any of the following mechanisms, listed in decreasing order of isolation strength: (a) separate process with IPC serialization boundary; (b) separate thread with immutable message passing and no shared mutable state; (c) synchronous function call with typed struct input, no closures capturing LLM state, and no interior mutability accessible from the LLM component. Pattern (a) provides the strongest isolation. Pattern (c) is acceptable when the implementation can demonstrate (via code review or static analysis) that no shared mutable path exists.
+
+**Verification.** Conformance requirement C6 (Section 12) defines the verification procedure: inspect the Gate implementation, verify inputs are typed structs, verify no shared mutable references, verify no dynamic code paths parameterized by LLM output.
 
 ---
 
@@ -350,9 +344,7 @@ When the Gate denies an action, the denial reason MUST be fed back to the LLM as
 
 ### 6.1 The Allow-List Principle
 
-An OATS-compliant runtime MUST support declarative tool contracts that define the complete behavioral contract for each tool. The contract specifies what the tool accepts (typed parameters with validation), how it is invoked (templates or structured calls), and what it produces (output schemas).
-
-The security model inverts the sandbox approach:
+OATS inverts the conventional sandbox model:
 
 - **Sandbox (deny-list):** LLM generates an arbitrary action. The security system intercepts it, evaluates it, and decides whether to allow or block it.
 - **Tool contract (allow-list):** LLM fills typed parameters constrained by the contract. The executor validates parameters, constructs the invocation from a template, and executes. The LLM never generates or sees the raw invocation.
@@ -361,37 +353,35 @@ The dangerous action cannot be expressed because the interface does not permit i
 
 ### 6.2 Contract Requirements
 
-A tool contract MUST define:
+A tool contract `κ` MUST define:
 
-1. **Typed parameters.** Each parameter has a declared type with validation constraints. The type system MUST include at minimum: string (with injection sanitization, optional regex pattern), integer (with optional min/max), boolean, enum (value from declared allow-list), and a target type for scope-checked values (hostnames, IPs, CIDRs, URLs). All string-based types MUST reject shell metacharacters (`;|&$\`(){}[]<>!`) by default.
+1. **Typed parameters.** Each parameter has a declared type from `T` with validation constraints. All string-based types MUST reject shell metacharacters (`;|&$\`(){}[]<>!`) by default.
 
-2. **Invocation mechanism.** The contract declares how the tool is invoked: command template, HTTP request template, protocol server address, or interactive session definition. The LLM never constructs invocation details directly.
+2. **Invocation mechanism.** Command template, HTTP request template, protocol server address, or interactive session definition. The LLM never constructs invocation details.
 
-3. **Output schema.** The contract declares the expected structure of tool output. The executor validates parsed output against this schema before returning results to the agent. Malformed results are rejected before they enter the agent's context.
+3. **Output schema.** Expected structure of tool output. The executor validates parsed output before returning results to the agent.
 
-4. **Policy metadata.** The contract declares the policy resource and action for the tool, enabling the policy engine to evaluate authorization without parsing tool-specific details.
+4. **Policy metadata.** Policy resource and action declarations enabling authorization without parsing tool-specific details.
 
-5. **Risk tier.** The contract declares a risk classification (e.g., low, medium, high, critical) that informs default policy generation and step-up authorization thresholds.
+5. **Risk tier.** Risk classification (low, medium, high, critical) informing default policy generation and step-up thresholds.
 
 ### 6.3 Execution Modes
 
-An OATS-compliant tool contract format SHOULD support multiple execution modes sharing a common governance layer:
+Tool contracts SHOULD support three execution modes sharing a common governance layer:
 
-- **Oneshot:** Execute a single invocation and return results. Backends may include shell commands, HTTP requests, or protocol server calls.
-- **Session:** Maintain a running process where each interaction is independently validated and policy-gated. For interactive tools (database consoles, security tools, REPLs).
-- **Browser:** Maintain a governed browser session where navigation, form submission, and script execution are typed, scoped, and policy-gated.
-
-All modes share the same typed parameter validation, policy gating, and evidence capture.
+| Mode | Description | Governance |
+|------|-------------|------------|
+| Oneshot | Single invocation, return results | Per-invocation Gate evaluation |
+| Session | Running process (PTY), per-interaction validation | Per-interaction Gate evaluation |
+| Browser | Governed browser (CDP/Playwright), scoped navigation | Per-action Gate evaluation |
 
 ### 6.4 Contract Integrity
 
-Tool contracts MUST support cryptographic integrity verification. When a contract is loaded, the runtime SHOULD verify its signature against the publisher's public key. A contract that fails verification MUST be rejected and the tool MUST NOT be registered.
+Tool contracts MUST support cryptographic integrity verification. Signatures MUST cover the entire contract -- parameters, validation rules, invocation templates, output schemas, and scope constraints. A contract failing verification MUST be rejected.
 
-The signature MUST cover the entire contract (parameters, validation rules, invocation templates, output schemas, scope constraints). Partial signatures that cover only the parameter schema are insufficient because the invocation template and scope constraints are security-critical.
+### 6.5 Schema Generation
 
-### 6.5 MCP Schema Generation
-
-Tool contracts SHOULD support automatic generation of protocol-compatible schemas (e.g., MCP `inputSchema` and `outputSchema`) from the contract definition. This enables the LLM to understand tool capabilities without the contract format being exposed to the LLM.
+Tool contracts SHOULD support automatic generation of protocol-compatible schemas (e.g., MCP `inputSchema` and `outputSchema`) from the contract definition. The LLM understands tool capabilities through generated schemas without the contract format being exposed.
 
 ---
 
@@ -399,39 +389,37 @@ Tool contracts SHOULD support automatic generation of protocol-compatible schema
 
 ### 7.1 The Identity Problem
 
-When AI agents interact with tools, services, and other agents, identity is typically self-asserted. An agent claims to be "Scout v2 from Tarnover LLC" with no way for the receiving party to verify that claim. A tool claims to offer a specific interface with no way for the agent to verify it has not been tampered with. Self-asserted identity provides no security guarantee: agents can be impersonated, tools can be spoofed, and delegation claims cannot be verified.
+When AI agents interact with tools, services, and other agents, identity is typically self-asserted. An agent claims to be "Scout v2 from Tarnover LLC" with no cryptographic proof. A tool claims to offer a specific interface with no integrity verification. Self-asserted identity provides no security guarantee.
 
-OATS specifies a two-layer cryptographic identity stack that addresses both directions of the trust problem:
+OATS specifies a two-layer cryptographic identity stack:
 
 ### 7.2 Tool Integrity Verification
 
-An OATS-compliant runtime MUST support cryptographic verification of tool schemas and contracts. The protocol MUST provide:
+An OATS-compliant runtime MUST support cryptographic verification of tool contracts. The protocol provides:
 
-- **Domain-anchored discovery.** Tool publishers host public keys at well-known endpoints (e.g., `/.well-known/` URIs per RFC 8615). No centralized registry is required.
-- **Signature verification.** Tool contracts and schemas are signed with ECDSA P-256 (or equivalent). The runtime verifies signatures before registering tools.
-- **Trust-On-First-Use (TOFU) key pinning.** On first encounter, the runtime pins the publisher's key. Subsequent key changes require explicit trust decisions, preventing silent key substitution.
-- **Revocation support.** Publishers can revoke keys and schemas. The runtime checks revocation status before accepting tools.
+- **Domain-anchored discovery.** Publishers host public keys at `/.well-known/` URIs (RFC 8615). No centralized registry.
+- **Signature verification.** Contracts signed with ECDSA P-256 (or equivalent). Runtime verifies before registration.
+- **TOFU key pinning.** On first encounter, the runtime pins the publisher's key. Subsequent key changes require explicit trust decisions.
+- **Revocation support.** Publishers can revoke keys and schemas. Runtime checks revocation status.
 
 ### 7.3 Agent Identity Verification
 
-An OATS-compliant runtime SHOULD support cryptographic agent identity verification. The protocol provides:
+An OATS-compliant runtime SHOULD support cryptographic agent identity verification:
 
-- **Domain-anchored agent identity.** Organizations publish verifiable identity documents for their agents at well-known endpoints, anchoring trust to domain ownership via existing DNS and HTTPS infrastructure.
-- **Short-lived credentials.** Agents are issued time-limited signed credentials (e.g., ES256 JWTs) declaring their identity, capabilities, and delegation chain.
-- **Verification protocol.** Verifiers validate credentials through a multi-step protocol including signature verification, domain binding, capability validation, revocation checking, and TOFU key pinning.
-- **Delegation chains.** Agent credentials support maker-deployer delegation, where the organization that builds agent software and the organization that deploys it are independently verifiable.
-- **Capability scoping.** Agent credentials declare specific capabilities (e.g., `read:data`, `write:reports`), enabling verifiers to enforce least-privilege access.
+- **Domain-anchored identity.** Organizations publish verifiable agent identity documents at `/.well-known/agent-identity.json`.
+- **Short-lived credentials.** ES256 JWTs declaring identity, capabilities, and delegation chain.
+- **Multi-step verification.** Signature verification, domain binding, capability validation, revocation checking, TOFU key pinning.
+- **Delegation chains.** Maker-deployer delegation where the software builder and instance deployer are independently verifiable.
+- **Capability scoping.** Credentials declare specific capabilities (e.g., `read:data`, `write:reports`).
 
 ### 7.4 Bidirectional Trust
 
-The two identity layers create a bidirectional trust model for agent-tool interactions:
+The combined verification flow:
 
-1. **Agent verifies tool.** Before invoking a tool, the agent's runtime verifies the tool's contract integrity using tool integrity verification. This ensures the tool has not been tampered with.
-2. **Tool verifies agent.** Before accepting an invocation, the tool (or its hosting runtime) verifies the agent's identity using agent identity verification. This ensures the agent is authorized to act.
-3. **Policy evaluation.** The runtime evaluates whether the verified agent's capabilities authorize it to use the verified tool.
-4. **Audit recording.** Both verifications and the policy decision are recorded in the cryptographic audit journal.
-
-This bidirectional model provides end-to-end trust: every action is attributable to a verified agent acting on a verified tool, with the authorization decision recorded immutably.
+1. Agent's runtime verifies tool contract integrity (tool has not been tampered with).
+2. Tool's runtime verifies agent identity (agent is authorized to act).
+3. Policy engine evaluates whether the verified agent's capabilities authorize use of the verified tool.
+4. Both verifications and the policy decision are recorded in the audit journal.
 
 ---
 
@@ -439,118 +427,86 @@ This bidirectional model provides end-to-end trust: every action is attributable
 
 ### 8.1 Policy Engine Requirements
 
-An OATS-compliant runtime MUST include a policy engine that evaluates the tuple `(action, context, identity)` and produces an authorization decision. The policy engine:
+An OATS-compliant policy engine evaluates the tuple `(a, C, I)` and produces an authorization decision. The engine:
 
-- MUST support five authorization decisions: Allow, Deny, Modify, Step-Up, Defer.
-- MUST evaluate both static policy (parameter constraints, forbidden patterns) and accumulated session context (intent alignment, compositional risk).
-- MUST operate outside LLM influence. The policy engine receives structured inputs and returns structured decisions. It does not process natural language, does not share memory with the LLM, and cannot be influenced by the LLM's reasoning.
-- SHOULD support a formally verifiable policy language (Cedar, OPA, or equivalent) that enables static analysis of policy correctness.
-- MUST default to deny. Actions without an explicit allow policy are denied.
+- MUST support five decisions: Allow, Deny, Modify, Step-Up, Defer.
+- MUST evaluate both static policy and accumulated session context.
+- MUST operate outside LLM influence: structured inputs, structured decisions, no natural language processing, no shared mutable state with the LLM.
+- SHOULD support a formally verifiable policy language (Cedar, OPA, or equivalent).
+- MUST default to deny.
 
 ### 8.2 Action Classification
 
-Not all actions can be evaluated the same way. OATS classifies actions into five categories based on how they should be evaluated:
+OATS classifies actions into five categories based on how they should be evaluated. The "structurally forbidden" category exists only in systems with allow-list tool contracts.
 
-- **Structurally forbidden.** Actions that cannot be expressed through the tool contract layer. These are eliminated before reaching the policy engine. No shell injection, no arbitrary command execution, no unconstrained API calls. This category exists only in systems with allow-list tool contracts; it is the primary differentiator of OATS's security model.
-- **Policy-forbidden.** Actions expressible through tool contracts but always blocked by policy regardless of context. Hard organizational limits (e.g., dropping production databases, connections to known malicious domains).
-- **Context-dependent deny.** Actions allowed by static policy but blocked when session context reveals inconsistency with stated intent. An agent authorized to send emails and query databases may exercise both capabilities legitimately, but reading customer PII followed by external email transmission constitutes a breach that neither action reveals in isolation.
-- **Context-dependent allow.** Actions denied by default policy but permitted when context demonstrates clear alignment with legitimate intent. Deleting database records appears dangerous in isolation, but if context confirms the user explicitly requested "clean up my test data," blocking the action frustrates legitimate work without security benefit.
-- **Context-dependent defer.** Actions whose risk cannot be conclusively determined. When available context is insufficient, ambiguous, or internally conflicting, execution is temporarily suspended pending additional context, validation, or human oversight.
-
-This classification addresses the fundamental limitation of policy-only systems: they answer "is this action permitted?" without asking "does this action make sense given what the user asked for and what the agent has done?" The structurally forbidden category goes further, eliminating entire classes of dangerous actions before any classification is needed.
+| Category | How Identified | Evaluation | Decision |
+|----------|----------------|------------|----------|
+| Structurally forbidden | Cannot be expressed via tool contract | None needed | N/A (inexpressible) |
+| Policy-forbidden | Static policy match | Static policy only | DENY |
+| Context-dependent deny | Policy allows, context misaligns | Static + context | DENY |
+| Context-dependent allow | Policy denies, context aligns | Static + context | STEP-UP / ALLOW |
+| Context-dependent defer | Insufficient/conflicting context | Indeterminate | DEFER |
 
 ### 8.3 Context Accumulation
 
-An OATS-compliant runtime MUST accumulate session context across actions within a session. The context accumulator maintains:
+The runtime MUST accumulate session context as an append-only, hash-chained log:
 
 - **Original request.** The user's initial instruction establishing intent.
-- **Action history.** The sequence of actions proposed, approved, denied, deferred, and executed.
-- **Data classification.** The sensitivity level of information accessed. When no classification mechanism produces a label, data MUST be treated as the highest configured sensitivity level.
-- **Tool outputs.** Results returned from previous actions.
-- **Semantic distance.** A measure of how far the current action has drifted from the original request (see Section 8.4).
-- **Identity context.** Verified identities of the agent, user, and tools involved.
-
-The context accumulator MUST be implemented as an append-only, hash-chained log (see Section 9), ensuring that the context informing policy decisions is itself tamper-evident.
+- **Action history.** Sequence of actions proposed, approved, denied, deferred, and executed.
+- **Data classification.** Sensitivity of information accessed. Default: highest configured level when unknown.
+- **Tool outputs.** Results from previous actions.
+- **Semantic distance.** Drift from original request (see Section 8.4).
+- **Identity context.** Verified identities of agent, user, and tools.
 
 ### 8.4 Semantic Distance Tracking
 
-An OATS-compliant runtime SHOULD compute semantic distance between actions and stated intent to detect intent drift. Semantic distance is computed via embedding similarity between the original request and the current action.
+The runtime SHOULD compute semantic distance between actions and stated intent:
 
-Cumulative drift SHOULD be tracked across action sequences, not only per-action. Drift thresholds are deployment-specific and SHOULD be calibrated empirically. When drift exceeds configured thresholds, the Gate SHOULD trigger deferral, step-up authorization, or denial depending on the configured risk level.
+```
+d(r_0, a_n) = 1 - cosine(embed(r_0), embed(a_n))
+```
 
-### 8.5 Step-Up Authorization
+where `r_0` is the original request and `a_n` is the current action. Cumulative drift SHOULD be tracked across sequences. Thresholds are deployment-specific and SHOULD be calibrated empirically.
 
-For ambiguous cases, the runtime MUST support step-up authorization workflows:
+**Semantic distance is a risk signal, not a primary authorization primitive.** The hard authorization layer in OATS is the deterministic policy engine (Cedar, OPA, or equivalent) evaluating structured inputs. Semantic distance provides an advisory signal that the policy engine may consume as one input to step-up or defer decisions, but OATS-compliant runtimes SHOULD NOT rely on semantic distance as the sole basis for irreversible denial. This separation ensures that the Gate's authorization decisions remain deterministic and reproducible even when the drift signal is heuristic. The limitations of embedding-based distance tracking are discussed in Section 15.
 
-- Action execution MUST block until an approval decision is received.
-- Full action context MUST be available to approvers.
-- Configurable timeouts MUST be enforced. Deny on timeout MUST be the default.
-- Approval decisions MUST be recorded in the audit journal with approver identity and timestamp.
+### 8.5 Step-Up Authorization and Deferral
 
-### 8.6 Deferral
+For **step-up authorization**: execution MUST block until approval; full context MUST be available to approvers; configurable timeouts MUST be enforced (deny on timeout); decisions MUST be recorded in the journal.
 
-For actions whose risk cannot be conclusively determined, the runtime MUST support deferral:
-
-- Deferred actions MUST remain paused without producing effects.
-- The runtime MUST track deferred actions and maintain their execution order.
-- Cascading deferrals MUST be bounded: when concurrently deferred actions exceed a configurable limit, subsequent actions MUST be denied.
-- Deny on timeout MUST be the default for deferred actions.
-- Deferred actions MUST generate receipts recording both the deferral and its resolution.
+For **deferral**: deferred actions MUST remain paused without effects; the runtime MUST track deferred actions and maintain execution order; cascading deferrals MUST be bounded (deny when limit exceeded); deny on timeout MUST be the default; both deferral and resolution MUST be recorded.
 
 ---
 
 ## 9. Audit Layer
 
-### 9.1 Journal Requirements
+### 9.1 Journal Architecture
 
-An OATS-compliant runtime MUST maintain a cryptographic audit journal recording all events in the ORGA loop. The journal is the authoritative record of what happened, when, why, and by whose authority.
+An OATS-compliant runtime MUST maintain a cryptographic audit journal. The journal is the authoritative record of what happened, when, why, and by whose authority.
 
 ### 9.2 Event Types
-
-The journal MUST record at minimum the following event types:
 
 | Event | When | Content |
 |-------|------|---------|
 | **LoopStarted** | Loop begins | Configuration, agent identity, original request |
-| **ReasoningComplete** | After LLM response, before Gate | Proposed actions, token usage |
-| **PolicyEvaluated** | After Gate decision | Actions evaluated, decisions, matching policies, reasons |
-| **ToolsDispatched** | After tool execution | Tools invoked, parameters, duration, evidence hashes |
-| **ObservationsCollected** | After collecting results | Observation count, context size |
+| **ReasoningComplete** | After LLM, before Gate | Proposed actions, token usage |
+| **PolicyEvaluated** | After Gate decision | Decisions, matching policies, reasons |
+| **ToolsDispatched** | After execution | Tools, parameters, duration, evidence hashes |
+| **ObservationsCollected** | After results | Observation count, context size |
 | **LoopTerminated** | Loop ends | Reason, iterations, total usage, duration |
-| **RecoveryTriggered** | On tool failure | Strategy, error context |
+| **RecoveryTriggered** | On failure | Strategy, error context |
 
 ### 9.3 Cryptographic Properties
 
-Each journal entry MUST include:
-
-- **Ed25519 signature** (or equivalent; ECDSA P-256 also acceptable). The signature covers the canonical serialization of the entry contents.
-- **Hash chain link.** Each entry includes the cryptographic hash of the previous entry, forming an append-only chain that detects retroactive modification.
-- **Timestamp.** Cryptographic timestamp for temporal ordering.
-
-Journal entries MUST be verifiable offline. A verifier with access to the journal and the signing public key can reconstruct the complete execution history and verify its integrity without access to the runtime.
+Each entry MUST include an Ed25519 signature (or ECDSA P-256) covering the canonical serialization, a hash chain link to the previous entry, and a cryptographic timestamp. Entries MUST be verifiable offline.
 
 ### 9.4 Evidence Envelopes
 
-Tool executions MUST produce structured evidence envelopes containing:
-
-- Tool name and version
-- Validated parameters
-- Constructed invocation (command, HTTP request, etc.)
-- Duration and exit status
-- Output hash (SHA-256)
-- Policy decision that authorized execution
-- Agent and user identity at time of execution
-
-Evidence envelopes are recorded in the journal and provide the forensic link between policy decisions and their effects.
+Tool executions MUST produce structured evidence envelopes: tool name and version, validated parameters, constructed invocation, duration and exit status, output hash (SHA-256), authorizing policy decision, and identity at execution time.
 
 ### 9.5 Compliance Properties
 
-The journal provides:
-
-- **HIPAA audit trail.** Every access to health data is recorded with identity, authorization, and timestamp.
-- **SOC2 evidence.** Policy enforcement decisions are immutably recorded.
-- **SOX audit trail.** Financial system actions are attributable and reconstructible.
-- **GDPR accountability.** Data access patterns are recorded for data subject rights enforcement.
+The journal provides infrastructure that can contribute to regulatory compliance, though OATS alone is not sufficient for any regulatory framework. Specifically: the journal can serve as a component of HIPAA audit trails (recording health data access with identity and authorization); SOC2 evidence collection (recording policy enforcement decisions); SOX audit trail requirements (recording attributable financial system actions); and GDPR accountability mechanisms (recording data access patterns). In each case, the journal addresses the technical recording requirement but does not address the organizational, procedural, or legal requirements of the applicable regulation.
 
 ---
 
@@ -558,28 +514,21 @@ The journal provides:
 
 ### 10.1 Multi-Tier Sandboxing
 
-An OATS-compliant runtime SHOULD support multiple sandboxing tiers with increasing isolation:
+An OATS-compliant runtime SHOULD support multiple sandboxing tiers:
 
-- **Tier 1: Container isolation.** Agent execution within container boundaries (e.g., Docker) with resource limits, network restrictions, and filesystem isolation.
-- **Tier 2: Kernel-level isolation.** Agent execution within a user-space kernel (e.g., gVisor) providing syscall filtering and interception without full virtualization overhead.
-- **Tier 3: Microkernel isolation.** Agent execution within a lightweight VM (e.g., Firecracker) providing hardware-level isolation with minimal overhead.
-
-The choice of tier is deployment-specific and SHOULD be configurable per agent or per task based on risk classification.
+| Tier | Mechanism | Isolation Level | Overhead |
+|------|-----------|-----------------|----------|
+| 1 | Container (Docker) | Process, filesystem, network | Low |
+| 2 | User-space kernel (gVisor) | Syscall filtering | Medium |
+| 3 | MicroVM (Firecracker) | Hardware-level | Medium-High |
 
 ### 10.2 Resource Limits
 
-Regardless of sandboxing tier, agent execution MUST support configurable resource limits:
-
-- Token budget (total tokens consumed across the session)
-- Time budget (wall-clock duration)
-- Iteration budget (maximum ORGA loop iterations)
-- Tool call budget (maximum tool invocations)
-- Network restrictions (allowed destinations, bandwidth limits)
-- Filesystem restrictions (accessible paths, write permissions)
+Agent execution MUST support configurable limits: token budget, time budget, iteration budget, tool call budget, network restrictions, and filesystem restrictions.
 
 ### 10.3 Circuit Breakers
 
-Tool executions SHOULD be protected by circuit breakers. When a tool fails repeatedly, the circuit breaker trips and subsequent calls to that tool are rejected without execution until the circuit resets. This prevents cascading failures and runaway retry loops.
+Tool executions SHOULD be protected by circuit breakers. When a tool fails repeatedly, the circuit trips and subsequent calls are rejected until reset, preventing cascading failures and runaway retry loops.
 
 ---
 
@@ -587,183 +536,305 @@ Tool executions SHOULD be protected by circuit breakers. When a tool fails repea
 
 ### 11.1 Communication Governance
 
-When agents communicate with other agents (delegation, queries, parallel execution), all inter-agent messages MUST pass through a communication policy gate. The gate evaluates authorization rules on communication primitives (ask, delegate, send, parallel, race) before execution.
+All inter-agent messages MUST pass through a communication policy gate evaluating authorization rules on communication primitives (ask, delegate, send, parallel, race).
 
 ### 11.2 Message Security
 
-Inter-agent messages MUST be:
-
-- **Cryptographically signed** (Ed25519 or equivalent) to ensure authenticity and integrity.
-- **Encrypted** (AES-256-GCM or equivalent) to ensure confidentiality.
-- **Attributed** to verified agent identities for audit trail purposes.
+Messages MUST be cryptographically signed (Ed25519), encrypted (AES-256-GCM), and attributed to verified agent identities.
 
 ### 11.3 Delegation Constraints
 
-Delegation chains MUST be bounded. An OATS-compliant runtime MUST enforce:
-
-- Maximum delegation depth (configurable)
-- Capability narrowing (a delegated agent cannot exceed the delegating agent's capabilities)
-- Blast-radius containment (a compromised agent in a delegation chain cannot escalate privileges)
+Delegation chains MUST be bounded: maximum depth (configurable), capability narrowing (delegated agents cannot exceed delegating agent's capabilities), and blast-radius containment.
 
 ### 11.4 Cross-Agent Context
 
-When an agent delegates to another agent, the session context (original user request, prior actions, data classifications) SHOULD be propagated to the downstream agent. This enables the downstream agent's Gate to evaluate actions against the original intent rather than only the delegation instruction.
+Session context (original request, prior actions, data classifications) SHOULD be propagated to downstream agents, enabling their Gates to evaluate against original intent.
 
 ---
 
 ## 12. Conformance Requirements
 
+The requirement language follows RFC 2119: MUST indicates absolute requirements; SHOULD indicates recommendations that may be omitted with documented justification.
+
 ### 12.1 Conformance Levels
 
-**OATS Core** (satisfies all MUST requirements): Provides baseline zero-trust agent execution.
+**OATS Core** (all MUST requirements, C1–C7): Baseline zero-trust agent execution.
 
-**OATS Extended** (satisfies all MUST and SHOULD requirements): Provides comprehensive zero-trust agent execution with identity, sandboxing, and advanced policy features.
+**OATS Extended** (all MUST and SHOULD requirements, C1–C7 + E1–E8): Comprehensive zero-trust with identity, sandboxing, and advanced policy.
 
 ### 12.2 Core Requirements (MUST)
 
-**C1: ORGA Loop Enforcement.** The runtime MUST implement the four-phase ORGA loop. The Gate phase MUST execute before every tool dispatch. In compiled languages, phase transitions MUST be enforced at compile time via typestates. In interpreted languages, equivalent guarantees MUST be provided through runtime enforcement with documented verification methodology.
+**C1: ORGA Loop Enforcement.** The runtime MUST implement the four-phase ORGA loop. The Gate MUST execute before every tool dispatch. In compiled languages, phase transitions MUST be enforced at compile time via typestates. In interpreted languages, equivalent enforcement MUST be provided and documented, with acknowledgment of residual risk per Section 5.5.
 
-**C2: Tool Contract Support.** The runtime MUST support declarative tool contracts with typed parameter validation. The LLM MUST NOT generate raw tool invocations (shell commands, API calls, SQL queries). All tool invocations MUST be constructed from validated parameters and contract-defined templates.
+*Verification:* Attempt to construct a code path from Reason to Act bypassing Gate. In a typestate implementation, this MUST be a compile error. In runtime-enforced implementations, this MUST be caught by a verified test suite with 100% tool dispatch path coverage.
 
-**C3: Policy Evaluation.** The runtime MUST evaluate actions against policy before execution. The policy engine MUST operate outside LLM influence. The policy engine MUST support Allow, Deny, Modify, Step-Up, and Defer decisions. Default stance MUST be deny.
+**C2: Tool Contract Support.** The runtime MUST support declarative tool contracts with typed parameter validation. The LLM MUST NOT generate raw tool invocations. All invocations MUST be constructed from validated parameters and contract-defined templates.
 
-**C4: Context Accumulation.** The runtime MUST accumulate session context across actions. Context MUST include original request (when available), action history, and data classification of accessed information.
+*Verification:* Submit parameters containing shell metacharacters (`;`, `|`, `&`, `` ` ``). Verify rejection. Submit parameters outside declared type constraints. Verify rejection. Verify the LLM never receives raw invocation strings in any code path.
 
-**C5: Cryptographic Audit Journal.** The runtime MUST maintain a hash-chained, cryptographically signed audit journal recording all ORGA loop events. Journal entries MUST be verifiable offline.
+**C3: Policy Evaluation.** The runtime MUST evaluate actions against policy before execution. The policy engine MUST operate outside LLM influence. MUST support Allow, Deny, Modify, Step-Up, and Defer decisions. Default MUST be deny.
 
-**C6: Gate Independence.** The Gate phase MUST operate on structured inputs only. It MUST NOT process natural language, share mutable state with the LLM, or be influenced by the LLM's reasoning process.
+*Verification:* Configure a DENY policy. Submit a matching action. Verify no effects on the target system. Verify denial recorded in journal with matching policy and reason. Repeat for each decision type.
+
+**C4: Context Accumulation.** The runtime MUST accumulate session context across actions. Context MUST include original request (when available), action history, and data classification.
+
+*Verification:* Execute a sequence of three or more actions. Verify the policy engine receives accumulated context for each subsequent action. Verify context includes prior actions and their data classifications.
+
+**C5: Cryptographic Audit Journal.** The runtime MUST maintain a hash-chained, cryptographically signed audit journal recording all ORGA loop events. Entries MUST be verifiable offline.
+
+*Verification:* Generate journal entries for allowed, denied, deferred, and step-up actions. Verify all fields present, signatures valid, and hash chain intact. Tamper with one entry and verify that chain verification detects the modification.
+
+**C6: Gate Independence.** The Gate MUST operate on structured inputs only. It MUST NOT process natural language, share mutable state with the LLM, or be influenced by the LLM's reasoning.
+
+*Verification:* Inspect Gate implementation. Verify inputs are typed structs (tool name, operation, parameters, identity, context), not natural language strings. Verify no shared mutable references between the Gate and the LLM inference component. Verify no dynamic code paths within the Gate that are parameterized by LLM output.
 
 **C7: Evidence Envelopes.** Tool executions MUST produce structured evidence envelopes with output hashes, execution metadata, and identity binding.
 
+*Verification:* Execute a tool. Verify the envelope contains tool name, version, validated parameters, constructed invocation, duration, exit status, SHA-256 output hash, authorizing policy decision, and agent/user identity.
+
 ### 12.3 Extended Requirements (SHOULD)
 
-**E1: Tool Integrity Verification.** The runtime SHOULD verify tool contract signatures using domain-anchored cryptographic verification with TOFU key pinning.
+**E1: Tool Integrity Verification.** Verify tool contract signatures using domain-anchored cryptographic verification with TOFU key pinning.
 
-**E2: Agent Identity Verification.** The runtime SHOULD verify agent identity using domain-anchored cryptographic credentials with delegation chain support.
+**E2: Agent Identity Verification.** Verify agent identity using domain-anchored ES256 credentials with delegation chain support.
 
-**E3: Semantic Distance Tracking.** The runtime SHOULD compute and track semantic distance between actions and stated intent.
+**E3: Semantic Distance Tracking.** Compute and track semantic distance between actions and stated intent using embedding similarity.
 
-**E4: Multi-Tier Sandboxing.** The runtime SHOULD support configurable sandboxing tiers for agent execution isolation.
+**E4: Multi-Tier Sandboxing.** Support configurable sandboxing tiers (container, kernel-level, microVM).
 
-**E5: Inter-Agent Communication Governance.** The runtime SHOULD enforce authorization policies on inter-agent communication with signed and encrypted messages.
+**E5: Inter-Agent Communication Governance.** Enforce authorization policies on inter-agent communication with signed and encrypted messages.
 
-**E6: Telemetry Export.** The runtime SHOULD export structured telemetry to security platforms (OCSF, CEF, or documented custom schemas).
+**E6: Telemetry Export.** Export structured telemetry (OCSF, CEF, or documented custom schemas) with real-time streaming.
 
-**E7: Formally Verifiable Policies.** The policy engine SHOULD use a formally verifiable policy language that enables static analysis of policy correctness.
+**E7: Formally Verifiable Policies.** Use a policy language enabling static analysis of correctness (Cedar, OPA, or equivalent).
 
-**E8: Least-Privilege Credential Scoping.** The runtime SHOULD support just-in-time credential issuance with operation-specific scoping.
-
-### 12.4 Verification Methodology
-
-For each Core requirement, the specification defines a verification procedure:
-
-- **C1:** Attempt to construct a code path from Reason to Act that bypasses Gate. In a typestate implementation, this MUST be a compile error. In a runtime-enforced implementation, this MUST be caught by a verified test suite.
-- **C2:** Submit tool parameters containing shell metacharacters. Verify rejection. Submit parameters outside declared type constraints. Verify rejection. Verify the LLM never receives raw invocation strings.
-- **C3:** Configure Deny policy. Submit matching action. Verify no effects on target system. Verify denial recorded in journal.
-- **C4:** Execute a sequence of actions. Verify the policy engine receives accumulated context for each subsequent action.
-- **C5:** Generate journal entries for allowed, denied, deferred, and step-up actions. Verify all fields present, signatures valid, and hash chain intact. Tamper with an entry and verify detection.
-- **C6:** Inspect Gate implementation. Verify no natural language parsing, no shared mutable state with LLM, no dynamic code paths influenced by LLM output.
-- **C7:** Execute a tool. Verify evidence envelope contains tool name, parameters, output hash, duration, identity, and policy decision.
+**E8: Least-Privilege Credential Scoping.** Support just-in-time credential issuance with operation-specific scoping and logged usage.
 
 ---
 
 ## 13. Implementation Architectures
 
-OATS does not mandate a specific implementation architecture. The specification defines what a compliant runtime must do, not how it must be implemented. However, we note that the ORGA loop with typestate enforcement has a natural home in systems-level languages with rich type systems (Rust being the exemplar), and that tool contracts benefit from a declarative format (TOML, YAML, or equivalent) that can be version-controlled alongside the tools they describe.
+OATS does not mandate a specific implementation architecture. The specification intentionally separates conformance properties from implementation details and includes four deployment patterns to reduce dependence on any single implementation. The current specification is informed by one reference implementation (Symbiont); independent conformance testing across additional implementations is needed to validate that the specification is sufficiently general. The following table compares the four reference architectures.
 
-### 13.1 Self-Hosted Runtimes
+| Property | Self-Hosted Runtime | Plugin/Extension | Gateway | Vendor Integration |
+|----------|---------------------|------------------|---------|--------------------|
+| You control | Everything | Agent code | Network | Policy only |
+| Enforcement | ORGA typestate | Dual-layer | Network proxy | Vendor hooks |
+| Bypass resistance | Very high | High | High | Vendor-dependent |
+| Context richness | Full | Full (inner) | Limited | Vendor-dependent |
+| Tool contracts | Full | Full (outer) | Partial | Vendor-dependent |
+| Identity | Full | Full (outer) | Partial | Vendor-dependent |
+| OATS-conformant | Yes | Yes | Partial | If hooks sufficient |
 
-For organizations that control their agent infrastructure, the full OATS stack (ORGA loop, tool contracts, policy engine, audit journal, identity verification, sandboxing) can be deployed as a single runtime. This provides the strongest guarantees: compile-time enforcement, full context visibility, cryptographic identity, and multi-tier isolation.
+### 13.1 Self-Hosted Runtime
+
+The full OATS stack deployed as a single runtime. Provides the strongest available enforcement properties: compile-time phase enforcement, full context visibility, cryptographic identity, and multi-tier isolation. Natural home in systems-level languages with rich type systems.
 
 ### 13.2 Plugin/Extension Model
 
-For agents that run inside third-party platforms (Claude Code, Gemini CLI, VS Code extensions), OATS compliance can be achieved through a layered approach:
-
-- **Inner layer (awareness):** A plugin or extension running inside the agent platform provides tool discovery, audit logging, and advisory policy evaluation.
-- **Outer layer (enforcement):** The agent platform runs inside an OATS-compliant runtime (via CLI executor, container wrapper, or similar). The outer runtime's ORGA Gate provides hard enforcement that the inner plugin cannot bypass.
-
-This dual-mode architecture provides governance for agents running on platforms the organization does not control, using the platform's extension mechanism for awareness and a wrapping runtime for enforcement.
+For agents running inside third-party platforms. An inner layer (plugin) provides awareness; an outer layer (OATS runtime wrapping the platform via CLI executor or container) provides enforcement. Because the outer ORGA Gate mediates all tool invocations at the process boundary, the inner platform cannot bypass it through normal operation, though side-channel bypasses (e.g., direct network calls from within the sandbox) require complementary network-level controls.
 
 ### 13.3 Gateway Architecture
 
-For protocol-based tool invocations (MCP, REST APIs), an OATS-compliant gateway can intercept all traffic between agents and tools. The gateway implements the Gate phase, context accumulation, and audit journaling. This provides enforcement without modifying agent code, at the cost of reduced context visibility (the gateway may not see internal agent state or the original user request unless explicitly provided).
+For protocol-based tool invocations (MCP, REST). An OATS-compliant gateway intercepts traffic between agents and tools, implementing Gate, context accumulation, and journaling. Provides enforcement without agent modification, at the cost of reduced context visibility.
 
 ### 13.4 Vendor Integration
 
-For SaaS agents where organizations control none of the infrastructure, OATS conformance requires vendor cooperation. Vendors must provide synchronous pre-execution hooks, decision enforcement, context availability, and receipt export. OATS provides the specification that customers can reference in vendor evaluations and contracts.
+For SaaS agents where organizations control no infrastructure. Requires vendor-provided synchronous pre-execution hooks, decision enforcement, context availability, and receipt export. OATS provides the specification for vendor evaluation and contracts.
 
 ---
 
-## 14. Research Directions
+## 14. Evaluation Framework
 
-### 14.1 Typestate in Non-Rust Languages
+The claims made in this specification are architectural: OATS is designed to provide certain security properties through structural enforcement. Converting these design-level claims into empirical evidence requires a systematic evaluation methodology. This section defines the evaluation framework; results will be published separately as they become available.
 
-The compile-time enforcement guarantee of OATS is strongest in languages with typestate support (Rust, potentially Haskell, Scala with phantom types). Providing equivalent guarantees in Python, JavaScript, and Go requires either runtime enforcement with formal verification of path coverage, or code generation from a verified specification. Research into practical typestate enforcement across language ecosystems is needed.
+### 14.1 Attack Suite Methodology
 
-### 14.2 Data Flow Through Context Windows
+To measure whether OATS reduces attack success rates, we define a comparative evaluation against three baselines:
 
-Tracking data lineage through LLM context windows remains an open challenge. Data may be transformed, summarized, or paraphrased by the LLM before being used in subsequent actions. Information-theoretic approaches (taint analysis, watermarking) are active research areas.
+| Configuration | Description |
+|---------------|-------------|
+| Baseline A | No policy enforcement. Agent invokes tools directly. |
+| Baseline B | Deny-list policy. Agent actions intercepted and evaluated against forbidden-action rules. |
+| Baseline C | Prompt-guardrail only. Input/output filtering at the LLM layer, no action-level enforcement. |
+| OATS | Full stack: ORGA loop, tool contracts, policy engine, identity verification, journal. |
 
-### 14.3 Multi-Agent Trust Coordination
+The attack suite combines existing benchmarks with custom scenarios:
 
-As agents delegate to other agents across organizational boundaries, maintaining coherent trust chains requires distributed tracing standards, federated receipt verification, and cross-domain policy negotiation. The identity layer specified in OATS provides the foundation, but the coordination protocols are not yet specified.
+- **AgentDojo:** Dynamic environment evaluating prompt injection attacks and defenses across realistic agent tasks. We measure attack success rate (percentage of injections that produce the attacker's intended tool invocation) and task utility (percentage of legitimate tasks completed successfully).
+- **Custom injection suite:** 200+ prompt injection variants (direct, indirect via documents, indirect via tool outputs, multi-turn) targeting tool invocations across 10 tool types. Includes attacks specifically targeting allow-list bypass (e.g., attempting to construct shell commands through parameter concatenation).
+- **Compositional exfiltration scenarios:** 50 multi-step sequences where individual actions are policy-compliant but the composition constitutes a violation (e.g., read sensitive data then email externally).
 
-### 14.4 Formal Verification of the ORGA Loop
+For each configuration, we report: attack success rate, task completion rate (legitimate tasks), false positive rate (legitimate actions blocked), and false negative rate (attack actions allowed).
 
-The typestate enforcement of ORGA provides compile-time guarantees about phase ordering, but formal verification of the entire loop (including policy engine correctness, context accumulator completeness, and journal integrity) would provide stronger assurance. Research into mechanized proofs of agent runtime properties is a promising direction.
+**Fairness methodology.** To prevent evaluation bias toward the OATS architecture, the following constraints apply: (a) all configurations use the same task suite, tool set, and underlying LLM; (b) credential scopes are identical across configurations; (c) deny-list policies in Baseline B are tuned using a held-out calibration set, not the test set; (d) all policy thresholds and drift thresholds are fixed before test execution and not adjusted post-hoc; (e) all failures, false negatives, and bypass successes are reported, not only aggregate metrics.
 
-### 14.5 Approval Fatigue and Deferral Resolution
+### 14.2 Performance Overhead
 
-Balancing security (more actions require approval) against usability (too many approvals cause fatigue) remains an open design challenge. ML-based approval recommendation, batch approval for similar actions, and progressive autonomy (where agents earn reduced approval requirements through demonstrated compliance) are active research directions.
+Runtime enforcement introduces latency. We define benchmarks for each enforcement layer. Targets are derived from operational experience and represent design goals, not validated measurements.
 
-### 14.6 Vector Embedding Security
+| Component | Measurement | Target |
+|-----------|-------------|--------|
+| Static policy evaluation | Per-action latency (p50, p95, p99) | <1ms |
+| Context-dependent evaluation | Per-action latency with accumulated context | <5ms |
+| Semantic distance computation | Per-action embedding + cosine similarity | <50ms |
+| Tool contract validation | Parameter type checking + sanitization | <0.5ms |
+| Ed25519 journal signing | Per-entry signature generation | <0.1ms |
+| Hash chain verification | Per-entry hash computation + chain link | <0.05ms |
+| Full ORGA Gate pipeline | End-to-end from action proposal to allow/deny | <10ms (p99) |
+| Evidence envelope generation | SHA-256 output hash + envelope construction | <1ms |
 
-When semantic distance tracking uses vector embeddings, the embeddings themselves become a security surface. Research into information-theoretic watermarking of embeddings, steganographic attack detection, and quantization-robust integrity verification is needed to ensure that the semantic distance mechanism itself cannot be subverted.
+Benchmarks should be run under realistic agent workloads (10–1000 actions per session) on commodity hardware, with context accumulation growing across the session.
+
+### 14.3 False Positive/Negative Analysis
+
+Security enforcement is useful only if it blocks attacks without blocking legitimate work. We define a methodology for measuring this tradeoff:
+
+- **Task suite:** Run BFCL (Berkeley Function Calling Leaderboard) and SWE-bench Lite task sets through an OATS-compliant runtime.
+- **False positive rate:** Percentage of legitimate tool invocations that the Gate denies or defers. Measured across policy strictness levels (permissive, moderate, strict).
+- **False negative rate:** Percentage of attack-injected tool invocations that the Gate allows. Measured using the attack suite from Section 14.1.
+- **ROC analysis:** Plot false positive rate vs. true positive rate across policy threshold configurations. Report area under curve (AUC) for each OATS layer.
+
+### 14.4 Bypass Resistance Testing
+
+Each enforcement mechanism has a theoretical bypass boundary. We define tests that probe these boundaries:
+
+- **Typestate circumvention:** Attempt to construct Rust code paths from Reasoning to ToolDispatching that skip PolicyCheck. The compiler should reject all such paths.
+- **Tool contract metacharacter injection:** Submit parameters containing shell metacharacters, SQL injection patterns, path traversal sequences, and Unicode homoglyphs to each parameter type.
+- **Gate influence probing:** Craft LLM outputs designed to influence Gate evaluation (e.g., embedding policy-override instructions in proposed action parameters, attempting to modify shared state).
+- **Sandbox escape:** Attempt network calls, filesystem access, and process spawning from within each sandbox tier.
+- **Identity spoofing:** Attempt to present forged AgentPin credentials, tampered SchemaPin signatures, and replayed JWTs.
+
+### 14.5 Ablation Study
+
+To measure the marginal contribution of each OATS layer, we define an ablation removing one layer at a time:
+
+| Configuration | Layers Active | Expected Impact |
+|---------------|---------------|-----------------|
+| Full OATS | All 5 layers | Baseline (best security, highest overhead) |
+| No contracts | ORGA + policy + identity + journal | Allows arbitrary action formulation |
+| No identity | ORGA + contracts + policy + journal | Removes mutual auth |
+| No context | ORGA + contracts + static policy + journal | Removes context-dependent classifications |
+| No journal | ORGA + contracts + policy + identity | Removes audit trail |
+| ORGA only | Loop enforcement, permissive policy | Tests whether phase ordering alone provides security value |
+
+### 14.6 Case Studies
+
+Three detailed scenarios that exercise multiple OATS layers simultaneously:
+
+- **Scenario 1: Multi-step data exfiltration.** An agent tasked with summarizing sales data for internal leadership receives a prompt injection instructing it to email customer PII externally. Traces through tool contract recipient restriction, PII context tracking, context-dependent deny, and journal recording.
+- **Scenario 2: Tool supply chain attack.** An attacker modifies a tool contract to widen parameter validation. SchemaPin signature verification detects the tampering; the runtime rejects the contract; the journal records the failure. A variant tests TOFU pin violation when the signing key is also compromised.
+- **Scenario 3: Intent drift across a long session.** An agent's scope gradually expands from CRM queries to accessing confidential strategy documents. Semantic distance increases monotonically; the drift threshold triggers step-up authorization; the approver receives full context including the drift trajectory.
 
 ---
 
-## 15. Conclusion
+## 15. Limitations
 
-OATS specifies what a zero-trust AI agent runtime must do to provide meaningful security guarantees for autonomous agent execution. The specification is grounded in three architectural convictions:
+This section identifies known limitations of the OATS specification. These are not future research directions (Section 16) but inherent boundaries of the current architecture.
 
-**Allow-list over deny-list.** Constraining what actions can be expressed is fundamentally stronger than intercepting arbitrary actions and deciding which to block. Tool contracts make dangerous actions structurally inexpressible.
+**Typestate scope.** Compile-time enforcement of the ORGA loop applies only to code paths within the typestate-governed loop. Agent code that bypasses the loop entirely -- for example, by invoking tools through a separate code path not mediated by the ORGA runner -- is not caught by the type system. Sandboxing and network isolation provide complementary enforcement but are defense-in-depth layers, not compile-time properties.
 
-**Compile-time over runtime enforcement.** Guaranteeing that policy evaluation cannot be bypassed through the type system is fundamentally stronger than testing that it works at runtime. The ORGA typestate makes invalid phase transitions compile errors.
+**Tool contract coverage.** The allow-list model governs only tools with declared contracts. Tools without contracts (legacy integrations, dynamically discovered MCP servers, ad-hoc API calls) are outside the allow-list boundary. An OATS-compliant runtime can deny uncontracted tool invocations by default, but this trades functionality for safety and may be impractical in environments with large numbers of tools.
 
-**Structural independence over trust assumptions.** Ensuring that the Gate operates outside LLM influence through structural isolation is fundamentally stronger than assuming the orchestration layer will correctly route actions through the policy engine.
+**Coverage-safety tradeoff.** The allow-list model inherently restricts the agent's action space. Novel legitimate tool uses that were not anticipated when the contract was authored will be rejected until the contract is updated. This creates operational friction proportional to the rate of tool evolution. The severity of this tradeoff has not been quantified empirically.
 
-These convictions are not theoretical. The architecture specified here has been validated through approximately eight months of autonomous operation in a production runtime (Symbiont, by ThirdKey AI), including a catastrophic disaster recovery scenario where the runtime rebuilt itself using its own agent infrastructure after a total codebase loss.
+**Semantic distance limitations.** Drift detection via embedding similarity depends on the quality of the embedding model and the meaningfulness of cosine distance in the action-intent space. Adversarial embeddings could subvert drift detection by producing actions that are semantically distant from the original intent but close in embedding space. The robustness of semantic distance tracking under adversarial conditions has not been evaluated.
 
-By publishing this specification as an open standard, we aim to establish baseline requirements that preserve interoperability and buyer choice. The goal is not to build OATS, but to define what an OATS-compliant system must do, enabling the market to compete on implementation quality rather than category definition.
+**Single reference implementation.** The specification is informed by one reference implementation (Symbiont). Multi-implementation conformance testing -- building independent OATS-compliant runtimes and verifying interoperability -- has not been conducted. The specification may contain implicit assumptions derived from the reference implementation that create unnecessary barriers for alternative implementations.
+
+**Regulatory insufficiency.** The audit journal provides technical infrastructure for compliance but is not sufficient for any regulatory framework on its own. HIPAA, SOC2, SOX, and GDPR each impose organizational, procedural, and legal requirements that OATS does not address. Claiming OATS compliance should not be conflated with claiming regulatory compliance.
+
+**Deferral latency.** The DEFER authorization decision suspends action execution until resolution. In time-critical agent workflows (e.g., real-time trading, incident response), deferral latency may be unacceptable. The specification does not provide guidance on latency-sensitive deferral policies beyond configurable timeouts.
+
+**Privacy in cross-agent context.** Propagating session context across agent boundaries (Section 11.4) raises privacy and data sovereignty concerns. Context may contain sensitive information from the original user's request, and propagating it to downstream agents in different organizational domains may violate data handling agreements. The specification does not address context redaction or privacy-preserving context propagation.
+
+**Non-deterministic evaluation.** Context-dependent action classification relies on the policy engine's evaluation of accumulated context. When the policy engine uses semantic similarity or ML-based classification, evaluation results may be non-deterministic across invocations. The specification requires deterministic policy engines (Cedar, OPA) but permits semantic distance as a SHOULD requirement, creating a tension between deterministic authorization and non-deterministic drift signals.
+
+---
+
+## 16. Research Directions
+
+### 16.1 Typestate in Non-Rust Languages
+
+OATS's compile-time enforcement property is most naturally expressed in languages with typestate support (Rust, Haskell, Scala). Providing equivalent enforcement in Python, JavaScript, and Go requires runtime checks with formal path coverage verification, or code generation from a verified specification. The degree of assurance loss when moving from compile-time to runtime enforcement is an open question.
+
+### 16.2 Data Flow Through Context Windows
+
+Data may be transformed, summarized, or paraphrased by the LLM before use in subsequent actions. Information-theoretic approaches (taint analysis, embedding watermarking) for tracking lineage through non-deterministic transformations are active research.
+
+### 16.3 Multi-Agent Trust Coordination
+
+Maintaining coherent trust chains across organizational boundaries in delegation requires distributed tracing standards, federated receipt verification, and cross-domain policy negotiation.
+
+### 16.4 Formal Verification of the ORGA Loop
+
+Typestate enforcement addresses phase ordering within the loop. Mechanized proofs of the entire system -- policy engine correctness, context accumulator completeness, journal integrity, and the absence of bypass paths outside the loop -- would provide substantially stronger assurance. Such proofs would also help bound the gap between specification-level properties and implementation-level behavior.
+
+### 16.5 Approval Fatigue and Deferral Resolution
+
+Balancing security against usability. ML-based approval recommendation, batch approval, and progressive autonomy (reduced approval requirements through demonstrated compliance) are active directions.
+
+### 16.6 Vector Embedding Security
+
+When semantic distance tracking uses embeddings, those embeddings become a security surface. Information-theoretic watermarking, steganographic attack detection, and quantization-robust integrity verification are needed.
+
+---
+
+## 17. Conclusion
+
+OATS specifies what a zero-trust AI agent runtime should do to provide meaningful security properties for autonomous agent execution. The specification is grounded in three architectural convictions, each of which requires empirical validation to confirm that design-level properties translate to measurable security improvements:
+
+**Allow-list over deny-list.** Constraining what actions can be expressed reduces the attack surface compared to intercepting arbitrary actions and deciding which to block. Tool contracts are designed to make dangerous actions structurally inexpressible within the contracted interface. The degree to which this reduces real-world attack success rates is an empirical question addressed by the evaluation framework in Section 14.
+
+**Compile-time over runtime enforcement.** Enforcing policy evaluation through the type system provides stronger structural assurance than testing it at runtime, because bypass paths that violate the typestate are rejected by the compiler rather than discovered through testing. This property holds within the typestate-governed code; it does not protect against bypasses that circumvent the loop entirely.
+
+**Structural independence over trust assumptions.** Architecturally isolating the Gate from LLM influence -- by restricting it to structured inputs with no shared mutable state -- reduces the risk that a compromised orchestration layer can influence policy evaluation. The strength of this isolation in practice depends on implementation quality and the completeness of the isolation boundary.
+
+The architecture specified here is informed by approximately eight months of autonomous operation in a production runtime (Symbiont, by ThirdKey AI), including rebuilding a codebase using the runtime's own agent infrastructure after a catastrophic loss event. This operational experience has shaped the specification's requirements and identified practical challenges, but it does not constitute a controlled empirical evaluation. Section 14 outlines the evaluation methodology needed to substantiate the specification's claims.
+
+By publishing this specification as an open standard, we aim to establish baseline requirements that enable comparable evaluation of runtime security approaches for autonomous agents. The goal is not to build OATS, but to define what an OATS-compliant system must do, enabling independent implementations to be measured against shared conformance criteria.
+
+### A. Future Directions for Adoption
+
+**For implementors:** Build independent OATS-compliant runtimes across different language ecosystems. Multi-implementation conformance testing is the most important next step for validating the specification's generality.
+
+**For evaluators:** Apply the evaluation framework in Section 14 to existing and new agent runtimes. Comparative results across architectures would substantially strengthen or refine the claims made in this specification.
+
+**For researchers:** Address open challenges in Section 16, particularly typestate portability across language ecosystems, formal verification of runtime properties, and multi-agent trust coordination.
+
+**For the community:** The specification is open and available at thirdkey.ai/oats. Feedback, critique, and competing proposals are welcome.
 
 ---
 
 ## References
 
-- Anthropic. "Model Context Protocol Specification." 2024. https://modelcontextprotocol.io
-- Amazon Web Services. "Cedar: A Language for Defining Permissions as Policies." 2023. https://www.cedarpolicy.com
-- Chuvakin, A. "Cloud CISO Perspectives: How Google secures AI Agents." Google Cloud Blog, June 2025.
-- Debenedetti, E. et al. "AgentDojo: A Dynamic Environment to Evaluate Attacks and Defenses for LLM Agents." arXiv:2406.13352, 2024.
-- Errico, H. "Autonomous Action Runtime Management (AARM): A System Specification for Securing AI-Driven Actions at Runtime." arXiv:2602.09433v1, 2026.
-- Gaire, S. et al. "Systematization of Knowledge: Security and Safety in the Model Context Protocol Ecosystem." arXiv:2512.08290, 2025.
-- Gregg, B. "BPF Performance Tools." Addison-Wesley, 2019.
-- Greshake, K. et al. "Not What You've Signed Up For: Compromising Real-World LLM-Integrated Applications with Indirect Prompt Injection." AISec Workshop at ACM CCS, 2023.
-- Hardy, N. "The Confused Deputy: (or why capabilities might have been invented)." ACM SIGOPS, 1988.
-- Microsoft. "Governance and security for AI agents across the organization." Cloud Adoption Framework, 2024.
-- Miller, M. S. "Robust Composition: Towards a Unified Approach to Access Control and Concurrency Control." Ph.D. dissertation, Johns Hopkins University, 2006.
-- National Institute of Standards and Technology. "AI Risk Management Framework (AI RMF 1.0)." 2023.
-- Open Policy Agent. "OPA: Policy-based control for cloud native environments." 2024. https://www.openpolicyagent.org
-- OWASP Foundation. "OWASP Top 10 for Large Language Model Applications." 2024.
-- Raza, S. et al. "TRiSM for Agentic AI: A Review of Trust, Risk, and Security Management in LLM-based Agentic Multi-Agent Systems." arXiv:2506.04133, 2025.
-- Reber, D. "The Agentic AI Security Scoping Matrix: A Framework for Securing Autonomous AI Systems." AWS Security Blog, November 2024.
-- Ruan, Y. et al. "The Emerged Security and Privacy of LLM Agent: A Survey with Case Studies." arXiv:2407.19354, 2024.
-- Su, H. et al. "A Survey on Autonomy-Induced Security Risks in Large Model-Based Agents." arXiv:2506.23844, 2025.
-- Wanger, J. "AgentPin Technical Specification v0.2.0." ThirdKey AI, 2026. https://agentpin.org
-- Wanger, J. "SchemaPin Protocol Specification." ThirdKey AI, 2025. https://schemapin.org
-- Wanger, J. "Symbiont Runtime Architecture." ThirdKey AI, 2026. https://symbiont.dev
-- Wanger, J. "ToolClad: Declarative Tool Interface Contracts for Agentic Runtimes v0.5.1." ThirdKey AI, 2026.
-- Wu, Q. et al. "Security of AI Agents." arXiv:2406.08689, 2024.
-- Ye, Q. et al. "ToolEmu: Identifying Risky Real-World Agent Failures with a Language Model Emulator." ICLR, 2024.
+1. Anthropic. "Model Context Protocol Specification." 2024. https://modelcontextprotocol.io
+2. Wang, L. et al. "A Survey on Large Language Model based Autonomous Agents." *Frontiers of Computer Science*, vol. 18, no. 6, 2024.
+3. Yao, S. et al. "ReAct: Synergizing Reasoning and Acting in Language Models." ICLR, 2023.
+4. Wu, Q. et al. "Security of AI Agents." arXiv:2406.08689, 2024.
+5. Ye, Q. et al. "ToolEmu: Identifying Risky Real-World Agent Failures with a Language Model Emulator." ICLR, 2024.
+6. Su, H. et al. "A Survey on Autonomy-Induced Security Risks in Large Model-Based Agents." arXiv:2506.23844, 2025.
+7. Debenedetti, E. et al. "AgentDojo: A Dynamic Environment to Evaluate Attacks and Defenses for LLM Agents." arXiv:2406.13352, 2024.
+8. Ruan, Y. et al. "The Emerged Security and Privacy of LLM Agent: A Survey with Case Studies." arXiv:2407.19354, 2024.
+9. Perez, S. et al. "Ignore This Title and HackAPrompt: Exposing Systemic Vulnerabilities of LLMs Through a Global Prompt Hacking Competition." EMNLP, 2023.
+10. Liu, Y. et al. "Formalizing and Benchmarking Prompt Injection Attacks and Defenses." USENIX Security, 2024.
+11. Greshake, K. et al. "Not What You've Signed Up For: Compromising Real-World LLM-Integrated Applications with Indirect Prompt Injection." AISec Workshop at ACM CCS, 2023.
+12. Miller, M. S. "Robust Composition: Towards a Unified Approach to Access Control and Concurrency Control." Ph.D. dissertation, Johns Hopkins University, 2006.
+13. Gaire, S. et al. "Systematization of Knowledge: Security and Safety in the Model Context Protocol Ecosystem." arXiv:2512.08290, 2025.
+14. Errico, H. "Autonomous Action Runtime Management (AARM): A System Specification for Securing AI-Driven Actions at Runtime." arXiv:2602.09433v1, 2026.
+15. Chuvakin, A. "Cloud CISO Perspectives: How Google secures AI Agents." Google Cloud Blog, June 2025.
+16. Reber, D. "The Agentic AI Security Scoping Matrix: A Framework for Securing Autonomous AI Systems." AWS Security Blog, November 2024.
+17. Microsoft. "Governance and security for AI agents across the organization." Cloud Adoption Framework, 2024.
+18. Raza, S. et al. "TRiSM for Agentic AI: A Review of Trust, Risk, and Security Management in LLM-based Agentic Multi-Agent Systems." arXiv:2506.04133, 2025.
+19. Hardy, N. "The Confused Deputy: (or why capabilities might have been invented)." *ACM SIGOPS Operating Systems Review*, vol. 22, no. 4, pp. 36–38, 1988.
+20. Open Policy Agent. "OPA: Policy-based control for cloud native environments." 2024. https://www.openpolicyagent.org
+21. Amazon Web Services. "Cedar: A Language for Defining Permissions as Policies." 2023. https://www.cedarpolicy.com
+22. OWASP Foundation. "OWASP Top 10 for Large Language Model Applications." 2024.
+23. National Institute of Standards and Technology. "AI Risk Management Framework (AI RMF 1.0)." 2023.
+24. Wanger, J. "AgentPin Technical Specification v0.2.0." ThirdKey AI, 2026. https://agentpin.org
+25. Wanger, J. "SchemaPin Protocol Specification." ThirdKey AI, 2025. https://schemapin.org
+26. Wanger, J. "ToolClad: Declarative Tool Interface Contracts for Agentic Runtimes v0.5.1." ThirdKey AI, 2026. https://toolclad.org
+27. Wanger, J. "Symbiont Runtime Architecture." ThirdKey AI, 2026. https://symbiont.dev
 
 ---
 
