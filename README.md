@@ -6,7 +6,7 @@
 **Status:** Release  
 **Authors:** Jascha Wanger / ThirdKey AI  
 **Date:** April 2026  
-**License:** Apache 2.0  
+**License:** CC BY 4.0  
 
 **PDF:** [OATS-v1.1.0.pdf](./OATS-v1.1.0.pdf)  
 
