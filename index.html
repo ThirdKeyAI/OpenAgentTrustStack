@@ -833,6 +833,7 @@
     <div class="nav-section">Future</div>
     <a href="#research">16. Research</a>
     <a href="#conclusion">17. Conclusion</a>
+    <a href="#supporting-papers">Supporting Papers</a>
     <a href="#references">References</a>
   </nav>
   <div class="sidebar-ai-summary">
@@ -2076,6 +2077,26 @@ AgentLoop&lt;Observing&gt;    -- observe()       --&gt;  AgentLoop&lt;Reasoning&
       <p><strong>For evaluators.</strong> Apply the evaluation framework in Section 14 to existing and new agent runtimes. Comparative results across architectures would substantially strengthen or refine the claims made in this specification.</p>
       <p><strong>For researchers.</strong> Address open challenges in Section 16, particularly typestate portability across language ecosystems, formal verification of runtime properties, and multi-agent trust coordination.</p>
       <p><strong>For the community.</strong> The specification is open and available at <a href="https://thirdkey.ai/oats">thirdkey.ai/oats</a>. Feedback, critique, and competing proposals are welcome.</p>
+    </section>
+
+    <!-- Supporting Papers -->
+    <section class="section" id="supporting-papers">
+      <div class="section-divider"></div>
+      <div class="section-number">Supporting Papers</div>
+      <h2>Companion Research</h2>
+      <p>Independent papers that support, extend, or empirically validate components of the OATS specification. These are not normative parts of OATS; they are referenced for readers seeking deeper treatment of specific mechanisms.</p>
+
+      <div class="pillar" style="margin-top: 1.5rem;">
+        <div class="pillar-number">Preprint &middot; v0.4 &middot; 2026-04-26</div>
+        <h4>Typestate-Enforced Agent Loops: Making Policy Gates Unskippable at Compile Time</h4>
+        <p>Wanger, J. Demonstrates a compile-time construction in which the type system makes skipping the policy gate impossible, evaluated across nine LLM providers via OpenRouter. Reports zero policy violations reaching execution among 263 blocked tool-call attempts, gate overhead of 30&ndash;95&micro;s per call, and zero Cedar false-positives on 813 legitimate runs across eight of nine models. Provides empirical grounding for the OATS Conviction&nbsp;02 (compile-time enforcement) and the ORGA loop&apos;s phase-ordering guarantees.</p>
+        <div style="display: flex; flex-wrap: wrap; gap: 1.25rem; align-items: center; margin-top: 0.75rem;">
+          <a href="https://doi.org/10.5281/zenodo.19746723" target="_blank" rel="noopener" class="hero-doi">
+            <img src="https://zenodo.org/badge/DOI/10.5281/zenodo.19746723.svg" alt="DOI 10.5281/zenodo.19746723">
+          </a>
+          <a href="https://doi.org/10.5281/zenodo.19746723" target="_blank" rel="noopener" style="color: var(--accent);">10.5281/zenodo.19746723</a>
+        </div>
+      </div>
     </section>
 
     <!-- References -->
