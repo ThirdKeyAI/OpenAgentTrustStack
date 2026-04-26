@@ -754,6 +754,47 @@
     .menu-toggle.open span::before { transform: rotate(45deg); top: 0; }
     .menu-toggle.open span::after { transform: rotate(-45deg); top: 0; }
 
+    /* ── Back-to-top button ── */
+    .back-to-top {
+      position: fixed;
+      right: 1.5rem;
+      bottom: 1.5rem;
+      z-index: 150;
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-surface);
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      cursor: pointer;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(8px);
+      transition: opacity 0.2s ease, transform 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
+    }
+    .back-to-top.visible {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+    .back-to-top:hover {
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+    .back-to-top svg {
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
     /* ── Responsive ── */
     @media (max-width: 1024px) {
       .content, .footer { padding-left: 2.5rem; padding-right: 2.5rem; }
@@ -796,6 +837,11 @@
 <!-- Mobile menu button -->
 <button class="menu-toggle" aria-label="Toggle navigation" onclick="toggleSidebar()">
   <span></span>
+</button>
+
+<!-- Back to top -->
+<button class="back-to-top" id="backToTop" aria-label="Back to top" onclick="scrollToTop()">
+  <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 14 12 8 18 14"></polyline></svg>
 </button>
 
 <!-- Sidebar -->
@@ -2189,6 +2235,17 @@ AgentLoop&lt;Observing&gt;    -- observe()       --&gt;  AgentLoop&lt;Reasoning&
 
   window.addEventListener('scroll', updateActiveNav, { passive: true });
   updateActiveNav();
+
+  // Back to top
+  const backToTopBtn = document.getElementById('backToTop');
+  function updateBackToTop() {
+    backToTopBtn.classList.toggle('visible', window.scrollY > 400);
+  }
+  function scrollToTop() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  window.addEventListener('scroll', updateBackToTop, { passive: true });
+  updateBackToTop();
 
   // Stagger section animations on scroll
   const observer = new IntersectionObserver((entries) => {
