@@ -850,7 +850,7 @@
     <div class="sidebar-logo">Specification</div>
     <div class="sidebar-title">Open Agent Trust Stack</div>
     <div class="sidebar-meta">
-      <span>v1.1.0 &middot; Release</span>
+      <span>v1.2.0 &middot; Release</span>
       <span>CC BY 4.0 License</span>
       <span>ThirdKey AI</span>
     </div>
@@ -875,6 +875,7 @@
     <a href="#implementations">13. Implementations</a>
     <div class="nav-section">Evaluation</div>
     <a href="#evaluation">14. Evaluation Framework</a>
+    <a href="#empirical-results">14.7. Empirical Results</a>
     <a href="#limitations">15. Limitations</a>
     <div class="nav-section">Future</div>
     <a href="#research">16. Research</a>
@@ -885,13 +886,13 @@
   <div class="sidebar-ai-summary">
     <h4>AI Summary</h4>
     <div class="ai-logos">
-      <a href="https://chatgpt.com/?prompt=Give+me+an+overview+of+the+Open+Agent+Trust+Stack+%28OATS%29%2C+an+open+specification+for+zero-trust+AI+agent+execution.+Cover+its+five+architectural+layers+%28ORGA+reasoning+loop%2C+tool+contracts%2C+identity+stack%2C+policy+engine%2C+audit+journal%29%2C+the+three+design+principles+%28allow-list+over+deny-list%2C+compile-time+over+runtime+enforcement%2C+structural+independence%29%2C+and+the+conformance+requirements+%28C1%E2%80%93C7+and+E1%E2%80%93E8%29.+Use+openagenttruststack.org+as+the+primary+source+and+consult+the+v1.1.0+specification+at+openagenttruststack.org%2FOATS-v1.1.0.pdf+and+related+material+at+thirdkey.ai%2C+symbiont.dev%2C+schemapin.org%2C+and+agentpin.org." target="_blank" rel="noopener" aria-label="Summarize with ChatGPT" class="ai-logo-btn">
+      <a href="https://chatgpt.com/?prompt=Give+me+an+overview+of+the+Open+Agent+Trust+Stack+%28OATS%29%2C+an+open+specification+for+zero-trust+AI+agent+execution.+Cover+its+five+architectural+layers+%28ORGA+reasoning+loop%2C+tool+contracts%2C+identity+stack%2C+policy+engine%2C+audit+journal%29%2C+the+three+design+principles+%28allow-list+over+deny-list%2C+compile-time+over+runtime+enforcement%2C+structural+independence%29%2C+and+the+conformance+requirements+%28C1%E2%80%93C7+and+E1%E2%80%93E8%29.+Use+openagenttruststack.org+as+the+primary+source+and+consult+the+v1.2.0+specification+at+openagenttruststack.org%2Foats_v1.2.0.pdf+and+related+material+at+thirdkey.ai%2C+symbiont.dev%2C+schemapin.org%2C+toolclad.org%2C+and+agentpin.org." target="_blank" rel="noopener" aria-label="Summarize with ChatGPT" class="ai-logo-btn">
         <svg viewBox="0 0 24 24" role="img" aria-hidden="true"><title>OpenAI icon</title><path d="M22.2819 9.8211a5.9847 5.9847 0 00-.5157-4.9108 6.0462 6.0462 0 00-6.5098-2.9A6.0651 6.0651 0 004.9807 4.1818a5.9847 5.9847 0 00-3.9977 2.9 6.0462 6.0462 0 00.7427 7.0966 5.98 5.98 0 00.511 4.9107 6.051 6.051 0 006.5146 2.9001A5.9847 5.9847 0 0013.2599 24a6.0557 6.0557 0 005.7718-4.2058 5.9894 5.9894 0 003.9977-2.9001 6.0557 6.0557 0 00-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 01-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 00.3927-.6813v-6.7369l2.02 1.1686a.071.071 0 01.038.052v5.5826a4.504 4.504 0 01-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 01-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 00.7806 0l5.8428-3.3685v2.3324a.0804.0804 0 01-.0332.0615L9.74 19.9502a4.4992 4.4992 0 01-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 012.3655-1.9728V11.6a.7664.7664 0 00.3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 01-.071 0l-4.8303-2.7865A4.504 4.504 0 012.3408 7.872zm16.5963 3.8558L13.1038 8.364 15.1192 7.2a.0757.0757 0 01.071 0l4.8303 2.7913a4.4944 4.4944 0 01-.6765 8.1042v-5.6772a.79.79 0 00-.407-.667zm2.0107-3.0231-.142-.0852-4.7735-2.7818a.7759.7759 0 00-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 01.0284-.0615l4.8303-2.7866a4.4992 4.4992 0 016.6802 4.66zM8.3065 12.863l-2.02-1.1638a.0804.0804 0 01-.038-.0567V6.0742a4.4992 4.4992 0 017.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 00-.3927.6813zm1.0976-2.3654 2.602-1.4998 2.6069 1.4998v2.9994l-2.5974 1.4997-2.6067-1.4997z"/></svg>
       </a>
-      <a href="https://claude.ai/new?q=Give%20me%20an%20overview%20of%20the%20Open%20Agent%20Trust%20Stack%20%28OATS%29%2C%20an%20open%20specification%20for%20zero-trust%20AI%20agent%20execution.%20Cover%20its%20five%20architectural%20layers%20%28ORGA%20reasoning%20loop%2C%20tool%20contracts%2C%20identity%20stack%2C%20policy%20engine%2C%20audit%20journal%29%2C%20the%20three%20design%20principles%20%28allow-list%20over%20deny-list%2C%20compile-time%20over%20runtime%20enforcement%2C%20structural%20independence%29%2C%20and%20the%20conformance%20requirements%20%28C1%E2%80%93C7%20and%20E1%E2%80%93E8%29.%20Use%20openagenttruststack.org%20as%20the%20primary%20source%20and%20consult%20the%20v1.1.0%20specification%20at%20openagenttruststack.org%2FOATS-v1.1.0.pdf%20and%20related%20material%20at%20thirdkey.ai%2C%20symbiont.dev%2C%20schemapin.org%2C%20and%20agentpin.org." target="_blank" rel="noopener" aria-label="Summarize with Claude" class="ai-logo-btn">
+      <a href="https://claude.ai/new?q=Give%20me%20an%20overview%20of%20the%20Open%20Agent%20Trust%20Stack%20%28OATS%29%2C%20an%20open%20specification%20for%20zero-trust%20AI%20agent%20execution.%20Cover%20its%20five%20architectural%20layers%20%28ORGA%20reasoning%20loop%2C%20tool%20contracts%2C%20identity%20stack%2C%20policy%20engine%2C%20audit%20journal%29%2C%20the%20three%20design%20principles%20%28allow-list%20over%20deny-list%2C%20compile-time%20over%20runtime%20enforcement%2C%20structural%20independence%29%2C%20and%20the%20conformance%20requirements%20%28C1%E2%80%93C7%20and%20E1%E2%80%93E8%29.%20Use%20openagenttruststack.org%20as%20the%20primary%20source%20and%20consult%20the%20v1.2.0%20specification%20at%20openagenttruststack.org%2Foats_v1.2.0.pdf%20and%20related%20material%20at%20thirdkey.ai%2C%20symbiont.dev%2C%20schemapin.org%2C%20toolclad.org%2C%20and%20agentpin.org." target="_blank" rel="noopener" aria-label="Summarize with Claude" class="ai-logo-btn">
         <svg viewBox="0 6.603 1192.672 1193.397" role="img" aria-hidden="true"><title>Claude icon</title><path d="m233.96 800.215 234.684-131.678 3.947-11.436-3.947-6.363h-11.436l-39.221-2.416-134.094-3.624-116.296-4.832-112.67-6.04-28.35-6.04-26.577-35.035 2.738-17.477 23.84-16.027 34.147 2.98 75.463 5.155 113.235 7.812 82.147 4.832 121.692 12.644h19.329l2.738-7.812-6.604-4.832-5.154-4.832-117.182-79.41-126.845-83.92-66.443-48.321-35.92-24.484-18.12-22.953-7.813-50.093 32.618-35.92 43.812 2.98 11.195 2.98 44.375 34.147 94.792 73.37 123.786 91.167 18.12 15.06 7.249-5.154.886-3.624-8.135-13.61-67.329-121.692-71.838-123.785-31.974-51.302-8.456-30.765c-2.98-12.645-5.154-23.275-5.154-36.242l37.127-50.416 20.537-6.604 49.53 6.604 20.86 18.121 30.765 70.39 49.852 110.818 77.315 150.684 22.631 44.698 12.08 41.396 4.51 12.645h7.813v-7.248l6.362-84.886 11.759-104.215 11.436-134.094 3.946-37.772 18.685-45.262 37.127-24.482 28.994 13.852 23.839 34.148-3.303 22.067-14.174 92.134-27.785 144.323-18.121 96.644h10.55l12.08-12.08 48.887-64.913 82.147-102.685 36.242-40.752 42.282-45.02 27.14-21.423h51.303l37.772 56.135-16.913 57.986-52.832 67.007-43.812 56.779-62.82 84.563-39.22 67.651 3.623 5.396 9.343-.886 141.906-30.201 76.671-13.852 91.49-15.705 41.396 19.329 4.51 19.65-16.269 40.189-97.852 24.16L959.84 601.45l-170.9 40.43-2.093 1.53 2.416 2.98 76.993 7.248 32.94 1.771h80.617l150.12 11.195 39.222 25.933 23.517 31.732-3.946 24.16-60.403 30.766-81.503-19.33-190.228-45.26-65.235-16.27h-9.02v5.397l54.362 53.154 99.624 89.96 124.752 115.973 6.362 28.671-16.027 22.63-16.912-2.415-109.611-82.47-42.282-37.127-95.758-80.618h-6.363v8.456l22.067 32.296 116.537 175.167 6.04 53.719-8.456 17.476-30.201 10.55-33.181-6.04-68.215-95.758-70.39-107.84-56.778-96.644-6.926 3.947-33.503 360.886-15.705 18.443L565.53 1200l-30.201-22.953-16.027-37.127 16.027-73.37 19.329-95.758 15.704-76.107 14.175-94.55 8.456-31.41-.563-2.094-6.927.886-71.275 97.852-108.402 146.497-85.772 91.812-20.537 8.134-35.597-18.443 3.301-32.94 19.893-29.315 118.712-151.007 71.597-93.583 46.228-54.04-.322-7.813h-2.738l-315.302 204.725-56.135 7.248-24.16-22.63 2.98-37.128 11.435-12.08 94.792-65.236-.322.323z"/></svg>
       </a>
-      <a href="https://www.perplexity.ai/?q=Give%20me%20an%20overview%20of%20the%20Open%20Agent%20Trust%20Stack%20%28OATS%29%2C%20an%20open%20specification%20for%20zero-trust%20AI%20agent%20execution.%20Cover%20its%20five%20architectural%20layers%20%28ORGA%20reasoning%20loop%2C%20tool%20contracts%2C%20identity%20stack%2C%20policy%20engine%2C%20audit%20journal%29%2C%20the%20three%20design%20principles%20%28allow-list%20over%20deny-list%2C%20compile-time%20over%20runtime%20enforcement%2C%20structural%20independence%29%2C%20and%20the%20conformance%20requirements%20%28C1%E2%80%93C7%20and%20E1%E2%80%93E8%29.%20Use%20openagenttruststack.org%20as%20the%20primary%20source%20and%20consult%20the%20v1.1.0%20specification%20at%20openagenttruststack.org%2FOATS-v1.1.0.pdf%20and%20related%20material%20at%20thirdkey.ai%2C%20symbiont.dev%2C%20schemapin.org%2C%20and%20agentpin.org." target="_blank" rel="noopener" aria-label="Summarize with Perplexity" class="ai-logo-btn">
+      <a href="https://www.perplexity.ai/?q=Give%20me%20an%20overview%20of%20the%20Open%20Agent%20Trust%20Stack%20%28OATS%29%2C%20an%20open%20specification%20for%20zero-trust%20AI%20agent%20execution.%20Cover%20its%20five%20architectural%20layers%20%28ORGA%20reasoning%20loop%2C%20tool%20contracts%2C%20identity%20stack%2C%20policy%20engine%2C%20audit%20journal%29%2C%20the%20three%20design%20principles%20%28allow-list%20over%20deny-list%2C%20compile-time%20over%20runtime%20enforcement%2C%20structural%20independence%29%2C%20and%20the%20conformance%20requirements%20%28C1%E2%80%93C7%20and%20E1%E2%80%93E8%29.%20Use%20openagenttruststack.org%20as%20the%20primary%20source%20and%20consult%20the%20v1.2.0%20specification%20at%20openagenttruststack.org%2Foats_v1.2.0.pdf%20and%20related%20material%20at%20thirdkey.ai%2C%20symbiont.dev%2C%20schemapin.org%2C%20toolclad.org%2C%20and%20agentpin.org." target="_blank" rel="noopener" aria-label="Summarize with Perplexity" class="ai-logo-btn">
         <svg viewBox="0 0 24 24" role="img" aria-hidden="true"><title>Perplexity icon</title><path d="M22.3977 7.0896h-2.3106V.0676l-7.5094 6.3542V.1577h-1.1554v6.1966L4.4904 0v7.0896H1.6023v10.3976h2.8882V24l6.932-6.3591v6.2005h1.1554v-6.0469l6.9318 6.1807v-6.4879h2.8882V7.0896zm-3.4657-4.531v4.531h-5.355l5.355-4.531zm-13.2862.0676 4.8691 4.4634H5.6458V2.6262zM2.7576 16.332V8.245h7.8476l-6.1149 6.1147v1.9723H2.7576zm2.8882 5.0404v-3.8852h1e-4v-2.6488l5.7763-5.7764v7.0111l-5.7764 5.2993zm12.7086.0248-5.7766-5.1509V9.0618l5.7766 5.7766v6.5588zm2.8882-5.0652h-1.733v-1.9723L13.3948 8.245h7.8478v8.087z"/></svg>
       </a>
     </div>
@@ -913,7 +914,7 @@
     <div class="hero-details">
       <div class="hero-detail">
         <strong>Version</strong>
-        1.1.0
+        1.2.0
       </div>
       <div class="hero-detail">
         <strong>Status</strong>
@@ -925,7 +926,7 @@
       </div>
       <div class="hero-detail">
         <strong>Date</strong>
-        2026-04-17
+        2026-05-01
       </div>
       <div class="hero-detail">
         <strong>License</strong>
@@ -933,7 +934,7 @@
       </div>
       <div class="hero-detail">
         <strong>PDF</strong>
-        <a href="https://zenodo.org/records/19636534/files/OATS-v1.1.0.pdf?download=1" style="color: var(--accent);">OATS-v1.1.0.pdf</a>
+        <a href="https://zenodo.org/records/19957381/files/oats_v1.2.0.pdf?download=1" style="color: var(--accent);">oats_v1.2.0.pdf</a>
       </div>
       <div class="hero-detail">
         <strong>DOI</strong>
@@ -973,7 +974,7 @@
       </div>
 
       <p>OATS specifies five layers: <strong>(1)</strong> the ORGA reasoning loop with compile-time phase enforcement, <strong>(2)</strong> declarative tool contracts with typed parameter validation, <strong>(3)</strong> a cryptographic identity stack providing bidirectional trust between agents and tools, <strong>(4)</strong> a formally verifiable policy engine operating on structured inputs, and <strong>(5)</strong> hash-chained cryptographic audit journals with Ed25519 signatures for tamper-evident forensic reconstruction.</p>
-      <p>OATS is model-agnostic, framework-agnostic, and vendor-neutral. The architecture is informed by operational experience with a production runtime (Symbiont) that has operated autonomously for approximately eight months; however, rigorous empirical evaluation remains ongoing and this version of the specification should be read as an architectural contribution with an accompanying evaluation framework rather than a fully validated system.</p>
+      <p>OATS is model-agnostic, framework-agnostic, and vendor-neutral. The architecture is informed by operational experience with a production runtime (Symbiont) that has operated autonomously for approximately eight months. Initial empirical results validating five of seven core conformance requirements are now available through companion preprints and the <code>symbi-kloop-bench</code> reference corpus; results are summarized in Section&nbsp;14.7. The specification continues to stand independently of any single implementation, and remaining empirical work is identified as future deliverables.</p>
 
       <figure class="diagram" id="fig-0" data-diagram="fig0">
         <span class="diagram-eyebrow">Figure 0 &middot; Trust stack</span>
@@ -1022,13 +1023,14 @@
       <p>When the policy engine shares context, memory, and execution environment with the orchestration layer it governs, an LLM compromised through prompt injection can potentially influence the evaluation of its own actions. In OATS, the Gate phase receives a structured action proposal and evaluates it against policy using a formally verifiable policy engine. The LLM cannot modify, bypass, or influence the Gate's evaluation.</p>
 
       <h3>1.3 Contributions</h3>
-      <p>This specification makes five contributions:</p>
+      <p>This specification makes six contributions:</p>
       <ol>
         <li><strong>Typestate-enforced reasoning loop.</strong> The ORGA cycle with compile-time phase enforcement, designed to prevent policy evaluation from being skipped, circumvented, or reordered within the loop (Section 5).</li>
         <li><strong>Allow-list tool contracts.</strong> A declarative tool contract format that constrains agent-tool interaction to typed, validated parameters, making dangerous actions structurally inexpressible (Section 6).</li>
         <li><strong>Layered cryptographic identity.</strong> A bidirectional identity stack providing mutual authentication between agents and tools via domain-anchored cryptographic verification (Section 7).</li>
         <li><strong>Hash-chained audit journals.</strong> Cryptographically signed, hash-chained event journals for tamper-evident forensic reconstruction (Section 9).</li>
         <li><strong>Conformance requirements.</strong> Minimum requirements for OATS-compliant systems, enabling objective evaluation of implementations (Section 12).</li>
+        <li><strong>Initial empirical evaluation.</strong> Initial results from the <code>symbi-kloop-bench</code> reference corpus and two companion preprints validate five of seven core conformance requirements. The corpus measures attack-suite refusal rates, fence non-redundancy via stack-stripping ablation, and runtime overhead across nine widely available hosted LLMs (Section&nbsp;14.7).</li>
       </ol>
       <p>OATS's novelty is not any single component in isolation &mdash; typestates, policy engines, cryptographic signatures, audit logs, and sandboxing each have extensive prior art. The contribution is the integration of five layers into a unified runtime security model centered on consequential action execution, with three properties not found in prior work in combination: (a) expressibility constraints that eliminate action categories before policy evaluation, (b) compile-time enforcement that the policy gate executes on every dispatch path within the loop, and (c) bidirectional cryptographic identity binding actions to verified agents and verified tools. The conformance requirements formalize these properties into testable criteria, enabling objective comparison across implementations.</p>
     </section>
@@ -1633,6 +1635,13 @@ AgentLoop&lt;Observing&gt;    -- observe()       --&gt;  AgentLoop&lt;Reasoning&
       <p><strong>Step-up authorization:</strong> execution <span class="req-tag req-must">MUST</span> block until approval; full context <span class="req-tag req-must">MUST</span> be available to approvers; configurable timeouts <span class="req-tag req-must">MUST</span> be enforced (deny on timeout); decisions <span class="req-tag req-must">MUST</span> be recorded in the journal.</p>
       <p><strong>Deferral:</strong> deferred actions <span class="req-tag req-must">MUST</span> remain paused without effects; the runtime <span class="req-tag req-must">MUST</span> track deferred actions and maintain execution order; cascading deferrals <span class="req-tag req-must">MUST</span> be bounded (deny when limit exceeded); deny on timeout <span class="req-tag req-must">MUST</span> be the default; both deferral and resolution <span class="req-tag req-must">MUST</span> be recorded.</p>
 
+      <h3>8.6 Defense in Depth at the Action Layer: Two Independent Fences</h3>
+      <p>Empirical results from stack-stripping ablation experiments on the reference implementation establish a previously under-emphasized architectural property: <strong>the action layer in an OATS-compliant runtime is two independent fences operating in series, not one.</strong> An OATS-compliant runtime <span class="req-tag req-should">SHOULD</span> make this distinction explicit and verify both fences independently.</p>
+      <p><strong>Fence A: the policy engine.</strong> Cedar (or equivalent) evaluates the tuple <code>(a, C, I)</code> against organizational policy and returns an authorization decision. This is the fence specified in Sections 8.1 through 8.5. It reasons over typed action proposals and accumulated session context.</p>
+      <p><strong>Fence B: the executor profile-of-one.</strong> Each principal's tool executor (<code>ActionExecutor</code> or its equivalent) <span class="req-tag req-must">MUST</span> maintain a static handler-map declaring exactly the set of tool names the principal is permitted to dispatch. Before dispatching any approved action, the executor <span class="req-tag req-must">MUST</span> verify that the action's tool name is a member of the principal's declared profile. Tool names not in the profile <span class="req-tag req-must">MUST</span> be refused even if the policy engine permits them. This refusal is independent of policy evaluation: it is a name-membership check against a static set.</p>
+      <p><strong>Why two fences.</strong> The two fences operate at different abstraction levels and fail in different ways. Cedar evaluates policies whose correctness depends on the policy author anticipating attack patterns; the executor profile-of-one evaluates against a static name list that is enumerable, reviewable, and amenable to formal analysis. Empirical ablation showed that with Cedar disabled in a 434-row tool-confusion sweep, the executor profile-of-one fence still refused 219 out-of-profile dispatches &mdash; a result the runtime would not have achieved with a single-fence action layer. The independence of the two fences is what produces this defense-in-depth property.</p>
+      <p><strong>Conformance implication.</strong> Conformance requirement C3 (Section&nbsp;12) is satisfied by implementing either fence; conformance to the defense-in-depth property requires both. An OATS Extended-conformant implementation <span class="req-tag req-should">SHOULD</span> implement both fences and document the independence guarantee. The two fences are particularly valuable in deployments where the policy engine is dynamically configurable (and thus may be misconfigured) while the principal tool profiles are statically declared at compile time or deployment time.</p>
+
       <figure class="diagram" id="fig-4" data-diagram="fig4">
         <span class="diagram-eyebrow">Figure 4 &middot; Action classification pipeline</span>
 
@@ -1935,7 +1944,7 @@ AgentLoop&lt;Observing&gt;    -- observe()       --&gt;  AgentLoop&lt;Reasoning&
       <div class="section-divider"></div>
       <div class="section-number">Section 14</div>
       <h2>Evaluation Framework</h2>
-      <p>The claims made in this specification are architectural: OATS is designed to provide certain security properties through structural enforcement. Converting these design-level claims into empirical evidence requires a systematic evaluation methodology. This section defines the evaluation framework; results will be published separately as they become available.</p>
+      <p>The claims made in this specification are architectural: OATS is designed to provide certain security properties through structural enforcement. Converting these design-level claims into empirical evidence requires a systematic evaluation methodology. Sections 14.1&ndash;14.6 define the evaluation framework; Section&nbsp;14.7 summarizes initial empirical results from the <code>symbi-kloop-bench</code> reference corpus and two companion preprints validating five of seven core conformance requirements.</p>
 
       <h3>14.1 Attack Suite Methodology</h3>
       <p>To measure whether OATS reduces attack success rates, we define a comparative evaluation against three baselines:</p>
@@ -2028,6 +2037,33 @@ AgentLoop&lt;Observing&gt;    -- observe()       --&gt;  AgentLoop&lt;Reasoning&
       <p><strong>Scenario 1: Multi-step data exfiltration.</strong> An agent is tasked with summarizing Q3 sales for internal leadership. A prompt injection in a retrieved document instructs the agent to email customer PII to an external address. The case study traces each ORGA phase, showing: (a) tool contract constrains the email recipient parameter, (b) context accumulation tracks that PII-classified data was accessed, (c) context-dependent deny classification blocks the external email, and (d) the journal records the full sequence for forensic reconstruction.</p>
       <p><strong>Scenario 2: Tool supply chain attack.</strong> An attacker modifies a tool contract to widen parameter validation (e.g., removing scope restrictions on a network scanner). The case study shows: (a) SchemaPin signature verification detects the contract modification, (b) the runtime rejects the tampered contract, (c) the journal records the verification failure. A variant tests what happens when the attacker also compromises the publisher's signing key (requiring TOFU pin violation detection).</p>
       <p><strong>Scenario 3: Intent drift across a long session.</strong> An agent is asked to prepare for a client meeting. Over 15 actions, the agent's scope gradually expands from CRM queries to accessing confidential strategy documents. The case study shows: (a) semantic distance increases monotonically, (b) the configured drift threshold triggers step-up authorization at action 11, (c) the human approver receives full context including the drift trajectory.</p>
+
+      <h3 id="empirical-results">14.7 Initial Empirical Results</h3>
+      <p>Initial empirical results from the reference implementation are now available through the <code>symbi-kloop-bench</code> reference corpus and two companion preprints. This section summarizes the headline findings; full methodology, per-model breakdowns, and reproduction artifacts are reported in the cited works.</p>
+
+      <h4>Methodology summary</h4>
+      <p>All sweeps run against nine widely available hosted LLMs in April 2026 (GPT-5, Claude Haiku 4.5, Gemini 2.5 Pro, DeepSeek-V3.1, Qwen3-235B, Qwen3.6-Plus, MiMo-V2-Pro, MiniMax-M2.7, gpt-oss-20b) routed through OpenRouter. Each sweep produces per-call JSONL audit sidecars from which the reported numbers are reproduced. Total authoritative billing across the corpus is approximately $30 over the v9 through v12 sweeps; reproduction scripts and the frozen sidecar databases are published with the cited preprints.</p>
+
+      <h4>Attack-suite results (validates C3, partial validation of C2)</h4>
+      <p>The v9 cloud-adversarial sweep tested ten attack shapes against the policy gate across 874 cloud-adversarial runs. Result: 263 forbidden tool-call attempts refused, zero attempts reaching execution. Cumulative across all sweeps: 642 Cedar denials plus 34 executor refusals. The false-positive baseline across 813 legitimate runs on eight of nine models was zero Cedar denials; the gpt-oss-20b case (82 denials on legitimate input) was explained as a model misconception correctly caught rather than a false positive.</p>
+
+      <h4>Tool-contract results (validates C2)</h4>
+      <p>The v11 ToolClad sweep tested eight argument-injection sub-shapes (metacharacter, command substitution, backtick, wildcard, newline, path traversal, Cyrillic-homoglyph IDN, punycode IDN) against a <code>whois_lookup</code> tool with a <code>scope_target</code> parameter type. Result: 333 of 335 treatment-arm dispatches refused across nine models. The two non-refusals were clean-hostname self-sanitisation cases (the model refused the injection prompt and emitted <code>example.com</code> instead of the canary payload); counted strictly against hostile inputs the bite-rate was 100%. The v0.1 sweep reported a published limitation (the as-built <code>scope_target</code> validator accepted punycode hostnames as a side effect of its ASCII-only rule); ToolClad v0.6.0 closed that gap with explicit punycode-label rejection, and the v0.2 sweep added a <code>punycode-idn</code> sub-shape that empirically validated the fix at 33 of 33 refusals.</p>
+
+      <h4>Ablation results: fence non-redundancy (validates the layered-defense claim)</h4>
+      <p>The v12 stack-stripping ablation disabled each fence layer in turn and measured the corresponding attack-class survival rate. Removing the policy gate exposed 100% of out-of-profile dispatches (115 v5-baseline denials drop to zero with Cedar disabled). Removing the content sanitiser exposed 92.2% of html-comment-smuggle payloads (389 of 422 stored procedures contained intact hostile content with the sanitiser disabled). Removing ToolClad exposed 99.4% of tool-arg-injection payloads on the v11 corpus. Across three attack classes and three fence types, each fence is empirically necessary to defend its class.</p>
+
+      <h4>Two-fences-at-action-layer finding (validates Section&nbsp;8.6)</h4>
+      <p>The Cedar ablation produced an unanticipated result: with Cedar disabled, the executor profile-of-one fence still refused 219 out-of-profile dispatches across 434 rows. This demonstrated that the action layer is two independent fences operating in series, not one. Cedar evaluates policies whose correctness depends on the policy author anticipating attack patterns; the executor profile-of-one evaluates against a static name list. The two fences are independent; removing one does not remove the other. This finding is now formalized in Section&nbsp;8.6 as a SHOULD requirement for OATS Extended conformance.</p>
+
+      <h4>Performance results (validates Table 7 targets)</h4>
+      <p>Instrumented measurements from the v10 sweep: the Cedar policy gate adds 30&ndash;95&micro;s per call (well below the 10ms p99 target in Table&nbsp;7). The content sanitiser adds approximately 345ns per call (well below the 0.5ms target). End-to-end agent-loop latency is dominated by LLM inference round-trip by four to seven orders of magnitude over any plausible runtime overhead from these enforcement components. Performance is empirically not a barrier to adopting the structural-enforcement model.</p>
+
+      <h4>Compile-fail tests (validates C1)</h4>
+      <p>Nine compile-fail tests in the reference implementation verify the typestate property on every CI run by exhibiting the expected compiler diagnostic for each illegal state transition. The tests cover skipping the policy check, observing without dispatching, retaining handles after move, constructing typestate values externally, accessing phase-specific data from the wrong phase, and feature-gating violations. The suite re-verifies on every commit; the typestate property is therefore not just specified but build-time enforced.</p>
+
+      <h4>What is not yet measured</h4>
+      <p>The reference corpus does not yet provide direct empirical evidence for: (C4) context accumulation across long sessions; (C6) Gate independence under targeted influence probing; (C5) audit journal tamper-resistance under adversarial conditions; (E1, E2) AgentPin and SchemaPin verification protocols under adversarial probing; (E4) sandbox escape testing across the three sandboxing tiers; case studies as specified in Section&nbsp;14.6; cross-language conformance across the Python, JavaScript, and Go reference implementations of ToolClad. These are identified as future deliverables.</p>
     </section>
 
     <!-- 15. Limitations -->
@@ -2095,27 +2131,27 @@ AgentLoop&lt;Observing&gt;    -- observe()       --&gt;  AgentLoop&lt;Reasoning&
       <div class="section-divider"></div>
       <div class="section-number">Section 17</div>
       <h2>Conclusion</h2>
-      <p>OATS specifies what a zero-trust AI agent runtime should do to provide meaningful security properties for autonomous agent execution. The specification is grounded in three architectural convictions, each of which requires empirical validation to confirm that design-level properties translate to measurable security improvements:</p>
+      <p>OATS specifies what a zero-trust AI agent runtime should do to provide meaningful security properties for autonomous agent execution. The specification is grounded in three architectural convictions, with initial empirical results (Section&nbsp;14.7) demonstrating implementation feasibility for five of seven core conformance requirements:</p>
 
       <div class="pillars">
         <div class="pillar">
           <div class="pillar-number">Principle</div>
           <h4>Allow-list over deny-list</h4>
-          <p>Constraining what actions can be expressed reduces the attack surface compared to intercepting arbitrary actions and deciding which to block. The degree to which this reduces real-world attack success rates is an empirical question addressed by the evaluation framework in Section 14.</p>
+          <p>Constraining what actions can be expressed reduces the attack surface compared to intercepting arbitrary actions and deciding which to block. The v11 ToolClad sweep empirically validates this property at 100% bite-rate against hostile inputs across nine widely available hosted LLMs and eight argument-injection sub-shapes (Section&nbsp;14.7).</p>
         </div>
         <div class="pillar">
           <div class="pillar-number">Principle</div>
           <h4>Compile-time over runtime enforcement</h4>
-          <p>Enforcing policy evaluation through the type system provides stronger structural assurance than testing it at runtime, because bypass paths that violate the typestate are rejected by the compiler rather than discovered through testing. This property holds within the typestate-governed code; it does not protect against bypasses that circumvent the loop entirely.</p>
+          <p>Enforcing policy evaluation through the type system provides stronger structural assurance than testing it at runtime. Nine compile-fail tests in the reference implementation verify the typestate property on every CI run; the property holds within the typestate-governed code, but does not protect against bypasses that circumvent the loop entirely.</p>
         </div>
         <div class="pillar">
           <div class="pillar-number">Principle</div>
           <h4>Structural independence over trust assumptions</h4>
-          <p>Architecturally isolating the Gate from LLM influence &mdash; by restricting it to structured inputs with no shared mutable state &mdash; reduces the risk that a compromised orchestration layer can influence policy evaluation. The strength of this isolation in practice depends on implementation quality and the completeness of the isolation boundary.</p>
+          <p>Architecturally isolating the Gate from LLM influence reduces the risk that a compromised orchestration layer can influence policy evaluation. The v9 cloud-adversarial sweep refused 263 forbidden tool-call attempts across 874 runs with zero attempts reaching execution; the v12 stack-stripping ablation additionally surfaced a previously under-emphasized architectural finding: the action layer is two independent fences operating in series (Section&nbsp;8.6), with the executor profile-of-one refusing 219 dispatches even when Cedar was disabled.</p>
         </div>
       </div>
 
-      <p>The architecture specified here is informed by approximately eight months of autonomous operation in a production runtime (Symbiont, by ThirdKey AI), including rebuilding a codebase using the runtime's own agent infrastructure after a catastrophic loss event. This operational experience has shaped the specification's requirements and identified practical challenges, but it does not constitute a controlled empirical evaluation. Section 14 outlines the evaluation methodology needed to substantiate the specification's claims.</p>
+      <p>The specification is informed by approximately eight months of autonomous operation in a production runtime (Symbiont), including rebuilding a codebase using the runtime's own agent infrastructure after a catastrophic loss event. The empirical results reported in Section&nbsp;14.7 substantiate a substantial subset of the specification's claims; remaining items (context accumulation under load, Gate-influence probing, journal tamper-resistance evaluation, multi-implementation conformance, controlled production case studies) are identified as future deliverables in Section&nbsp;14.7 and Section&nbsp;15.</p>
       <p>By publishing this specification as an open standard, we aim to establish baseline requirements that enable comparable evaluation of runtime security approaches for autonomous agents. The goal is not to build OATS, but to define what an OATS-compliant system must do, enabling independent implementations to be measured against shared conformance criteria.</p>
 
       <h3>A. Future Directions for Adoption</h3>
@@ -2174,10 +2210,13 @@ AgentLoop&lt;Observing&gt;    -- observe()       --&gt;  AgentLoop&lt;Reasoning&
         <li>Amazon Web Services. "Cedar: A Language for Defining Permissions as Policies." 2023. <a href="https://www.cedarpolicy.com">cedarpolicy.com</a></li>
         <li>OWASP Foundation. "OWASP Top 10 for Large Language Model Applications." 2024.</li>
         <li>National Institute of Standards and Technology. "AI Risk Management Framework (AI RMF 1.0)." 2023.</li>
+        <li>Wanger, J. <em>Typestate-Enforced Agent Loops: Making Policy Gates Unskippable at Compile Time</em>, preprint v0.5. ThirdKey AI, April 2026.</li>
+        <li>Wanger, J. <em>Making Dangerous Tool Arguments Inexpressible: A Declarative Contract Format for LLM Agents</em>, preprint v0.2. ThirdKey AI, April 2026.</li>
+        <li>Wanger, J. <em>Symbiont ORGA Demo: Reproduction Artifact for Typestate-Enforced Agent Loops</em>. <a href="https://github.com/ThirdKeyAI/symbiont-orga-demo">github.com/ThirdKeyAI/symbiont-orga-demo</a>, 2026. Accessed April 2026.</li>
+        <li>Wanger, J. "Symbiont Runtime Architecture." ThirdKey AI, 2026. <a href="https://symbiont.dev">symbiont.dev</a></li>
         <li>Wanger, J. "AgentPin Technical Specification v0.2.0." ThirdKey AI, 2026. <a href="https://agentpin.org">agentpin.org</a></li>
         <li>Wanger, J. "SchemaPin Protocol Specification." ThirdKey AI, 2025. <a href="https://schemapin.org">schemapin.org</a></li>
-        <li>Wanger, J. "ToolClad: Declarative Tool Interface Contracts for Agentic Runtimes v0.5.1." ThirdKey AI, 2026. <a href="https://toolclad.org">toolclad.org</a></li>
-        <li>Wanger, J. "Symbiont Runtime Architecture." ThirdKey AI, 2026. <a href="https://symbiont.dev">symbiont.dev</a></li>
+        <li>Wanger, J. "ToolClad: Declarative Tool Interface Contracts for Agentic Runtimes v0.6.0." ThirdKey AI, 2026. <a href="https://toolclad.org">toolclad.org</a></li>
       </ol>
     </section>
 
