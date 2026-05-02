@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Open Agent Trust Stack &middot; Page not found</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <script>
+    (function () {
+      var LATEST = "/oats_v1.2.0.pdf";
+      var path = window.location.pathname;
+      var oldPdf = /^\/(?:oats|OATS)[-_]v\d+\.\d+\.\d+\.pdf$/i;
+      if (oldPdf.test(path) && path !== LATEST) {
+        window.location.replace(LATEST);
+      }
+    })();
+  </script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+           max-width: 640px; margin: 4rem auto; padding: 0 1.5rem; line-height: 1.5; color: #111; }
+    a { color: #0a66c2; }
+    code { background: #f4f4f4; padding: 0.1em 0.3em; border-radius: 3px; }
+  </style>
+</head>
+<body>
+  <h1>Page not found</h1>
+  <p>The page you requested does not exist on <strong>openagenttruststack.org</strong>.</p>
+  <p>If you were looking for an older version of the OATS specification, the
+     latest release is available at <a href="/oats_v1.2.0.pdf">oats_v1.2.0.pdf</a>.</p>
+  <p>Otherwise, return to the <a href="/">OATS home page</a>.</p>
+</body>
+</html>
